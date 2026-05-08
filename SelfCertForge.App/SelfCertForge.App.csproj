@@ -37,6 +37,14 @@
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 		<ValidateXcodeVersion>false</ValidateXcodeVersion>
 		<MauiEnableXamlCBindingWithSourceCompilation>true</MauiEnableXamlCBindingWithSourceCompilation>
+
+		<!-- Multi-size .ico embedded as the Win32 ICON resource in the .exe.
+		     Used by Windows desktop shortcuts (which read the exe's icon, not the
+		     package tile assets the Start Menu / taskbar use). MAUI's resizetizer
+		     only emits a single 64×64 .ico, which Windows then upscales to 96/256
+		     for large-icon views and the squircle washes out — so we provide a
+		     pre-built 16/24/32/48/256 ico generated from appicon_windows.svg. -->
+		<ApplicationIcon Condition="$(TargetFramework.Contains('-windows'))">Platforms\Windows\app.ico</ApplicationIcon>
 	</PropertyGroup>
 
 	<ItemGroup>
