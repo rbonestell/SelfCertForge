@@ -21,13 +21,10 @@ jobs:
       matrix:
         include:
           - os: macos-latest
-            rid: maccatalyst-arm64
-            channel: osx-arm64
+            # Universal build — no rid; publish uses csproj <RuntimeIdentifiers>
+            # to lipo-merge x64 + arm64 into a single .app bundle.
+            channel: osx
             framework: net10.0-maccatalyst
-          # - os: macos-13
-          #   rid: maccatalyst-x64
-          #   channel: osx-x64
-          #   framework: net10.0-maccatalyst
           - os: windows-latest
             rid: win-x64
             channel: win-x64
@@ -102,10 +99,11 @@ jobs:
       # --- Build ---
       - name: Publish app (macOS)
         if: runner.os == 'macOS'
+        # No -r flag: lets the csproj <RuntimeIdentifiers> drive a universal
+        # (maccatalyst-x64 + maccatalyst-arm64) lipo-merged .app bundle.
         run: >
           dotnet publish ${{ env.APP_PROJECT }}
           -f ${{ matrix.framework }}
-          -r ${{ matrix.rid }}
           -c Release
           --self-contained true
           /p:ValidateXcodeVersion=false
@@ -238,7 +236,7 @@ jobs:
           vpk pack \
             -u "$APP_NAME" \
             -v "$APP_VERSION" \
-            -p "SelfCertForge.App/bin/Release/${{ matrix.framework }}/${{ matrix.rid }}/SelfCertForge.app" \
+            -p "SelfCertForge.App/bin/Release/${{ matrix.framework }}/SelfCertForge.app" \
             -c ${{ matrix.channel }} \
             --mainExe SelfCertForge \
             --packTitle "$APP_NAME" \
@@ -330,7 +328,7 @@ jobs:
           TAG_NAME: ${{ github.event.release.tag_name }}
           APP_VERSION: ${{ steps.version.outputs.version }}
         run: |
-          for channel in osx-arm64 win-x64 win-arm64; do
+          for channel in osx win-x64 win-arm64; do
             vpk upload github \
               --repoUrl "$REPO_URL" \
               --tag "$TAG_NAME" \
