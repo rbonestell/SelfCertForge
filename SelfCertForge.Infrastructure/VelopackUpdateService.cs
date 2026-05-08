@@ -28,10 +28,14 @@ public sealed class VelopackUpdateService : IUpdateService
 
     private static string GetPlatformChannel()
     {
+        // macOS ships a single universal (x64+arm64 lipo) .app under the "osx"
+        // channel; Windows ships per-arch installers since PE has no equivalent
+        // of fat binaries.
+        if (OperatingSystem.IsMacOS() || OperatingSystem.IsMacCatalyst())
+            return "osx";
+
         var arch = RuntimeInformation.OSArchitecture == Architecture.Arm64 ? "arm64" : "x64";
-        return OperatingSystem.IsMacOS() || OperatingSystem.IsMacCatalyst()
-            ? $"osx-{arch}"
-            : $"win-{arch}";
+        return $"win-{arch}";
     }
 
     public bool IsUpdateSupported => _manager?.IsInstalled ?? false;
