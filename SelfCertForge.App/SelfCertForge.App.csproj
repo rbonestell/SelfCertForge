@@ -43,8 +43,15 @@
 
 	<ItemGroup>
 		<!-- App Icon. The brand SVG is multi-color; Color is the bg fill behind any
-		     transparent regions and matches the design-system Forge Black surface. -->
-		<MauiIcon Include="Resources\AppIcon\appicon.svg" Color="#0B0C10" />
+		     transparent regions and matches the design-system Forge Black surface.
+		     macOS / iOS / Android apply their own corner masks. Windows does not,
+		     so for the Windows TFM we use a variant that bakes a squircle clip
+		     (~22.37% corner radius — Apple-style continuous-corner approximation)
+		     directly into the SVG and inlines its own bg fill. -->
+		<MauiIcon Include="Resources\AppIcon\appicon.svg" Color="#0B0C10"
+		          Condition="!$(TargetFramework.Contains('-windows'))" />
+		<MauiIcon Include="Resources\AppIcon\appicon_windows.svg"
+		          Condition="$(TargetFramework.Contains('-windows'))" />
 
 		<!-- Splash Screen -->
 		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#0B0C10" BaseSize="256,256" />
