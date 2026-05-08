@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"
+             xmlns:controls="clr-namespace:SelfCertForge.App.Controls"
+             x:Class="SelfCertForge.App.Controls.EmptyState"
+             x:Name="Root">
+    <VerticalStackLayout Spacing="16" HorizontalOptions="Center" VerticalOptions="Center">
+        <shapes:Path Data="{Binding Source={x:Reference Root}, Path=IconData}"
+                     Stroke="{StaticResource ColorTextMuted}"
+                     StrokeThickness="1.5"
+                     StrokeLineCap="Round"
+                     StrokeLineJoin="Round"
+                     Aspect="Uniform"
+                     WidthRequest="40"
+                     HeightRequest="40"
+                     HorizontalOptions="Center"
+                     IsVisible="{Binding Source={x:Reference Root}, Path=HasIcon}" />
+
+        <Label Text="{Binding Source={x:Reference Root}, Path=Title}"
+               FontFamily="InterSemiBold"
+               FontSize="20"
+               TextColor="{StaticResource ColorTextPrimary}"
+               HorizontalOptions="Center"
+               HorizontalTextAlignment="Center" />
+
+        <Label Text="{Binding Source={x:Reference Root}, Path=Body}"
+               FontFamily="InterRegular"
+               FontSize="14"
+               TextColor="{StaticResource ColorTextMuted}"
+               LineHeight="1.4"
+               MaximumWidthRequest="380"
+               HorizontalOptions="Center"
+               HorizontalTextAlignment="Center"
+               IsVisible="{Binding Source={x:Reference Root}, Path=HasBody}" />
+
+        <Border BackgroundColor="{StaticResource ColorAccentPrimary}"
+                Stroke="{StaticResource Transparent}"
+                StrokeThickness="0"
+                StrokeShape="RoundRectangle 10"
+                Padding="18,0"
+                HeightRequest="36"
+                HorizontalOptions="Center"
+                Margin="0,4,0,0"
+                IsVisible="{Binding Source={x:Reference Root}, Path=HasCta}">
+            <Border.Behaviors>
+                <controls:PrimaryButtonBehavior />
+            </Border.Behaviors>
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding Source={x:Reference Root}, Path=CtaCommand}" />
+            </Border.GestureRecognizers>
+            <Label Text="{Binding Source={x:Reference Root}, Path=CtaLabel}"
+                   FontFamily="InterSemiBold"
+                   FontSize="14"
+                   TextColor="White"
+                   VerticalOptions="Center"
+                   HorizontalOptions="Center" />
+        </Border>
+    </VerticalStackLayout>
+</ContentView>

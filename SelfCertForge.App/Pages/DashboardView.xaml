@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:SelfCertForge.Core.Presentation;assembly=SelfCertForge.Core"
+             xmlns:controls="clr-namespace:SelfCertForge.App.Controls"
+             xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"
+             xmlns:pages="clr-namespace:SelfCertForge.App.Pages"
+             x:Class="SelfCertForge.App.Pages.DashboardView"
+             x:DataType="vm:DashboardViewModel">
+
+    <ScrollView BackgroundColor="Transparent">
+        <VerticalStackLayout Padding="32,28" Spacing="28">
+
+            <!-- Page header -->
+            <HorizontalStackLayout Spacing="16" VerticalOptions="Center">
+                <Grid WidthRequest="44" HeightRequest="44" VerticalOptions="Center">
+                    <shapes:Path Data="{x:Static controls:IconPaths.LayoutDashboard}"
+                                 Stroke="{StaticResource ColorTextPrimary}"
+                                 StrokeThickness="1.5"
+                                 StrokeLineCap="Round"
+                                 StrokeLineJoin="Round"
+                                 Aspect="Uniform"
+                                 WidthRequest="44"
+                                 HeightRequest="44" />
+                </Grid>
+                <VerticalStackLayout Spacing="6" VerticalOptions="Center">
+                    <Label Text="Dashboard"
+                           FontFamily="InterSemiBold"
+                           FontSize="32"
+                           TextColor="{StaticResource ColorTextPrimary}" />
+                    <Label Text="An overview of your local trust state."
+                           FontFamily="InterRegular"
+                           FontSize="16"
+                           TextColor="{StaticResource ColorTextMuted}" />
+                </VerticalStackLayout>
+            </HorizontalStackLayout>
+
+            <!-- 4-up stat grid -->
+            <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="14" RowDefinitions="Auto">
+
+                <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Root Authorities"
+                               FontFamily="InterSemiBold"
+                               FontSize="16"
+                               TextColor="{StaticResource ColorTextMuted}" />
+                        <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
+                            <Grid WidthRequest="28" HeightRequest="28" VerticalOptions="Center">
+                                <shapes:Path Data="{x:Static controls:IconPaths.ShieldCheck}"
+                                             Stroke="{StaticResource ColorTextPrimary}"
+                                             StrokeThickness="1.5"
+                                             StrokeLineCap="Round"
+                                             StrokeLineJoin="Round"
+                                             Aspect="Uniform"
+                                             WidthRequest="28"
+                                             HeightRequest="28" />
+                            </Grid>
+                            <Label Text="{Binding RootAuthorities}"
+                                   FontFamily="InterSemiBold"
+                                   FontSize="32"
+                                   TextColor="{StaticResource ColorTextPrimary}"
+                                   VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Grid.Column="1" Style="{StaticResource CardStyle}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Certificates"
+                               FontFamily="InterSemiBold"
+                               FontSize="16"
+                               TextColor="{StaticResource ColorTextMuted}" />
+                        <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
+                            <Grid WidthRequest="28" HeightRequest="28" VerticalOptions="Center">
+                                <shapes:Path Data="{x:Static controls:IconPaths.FileBadge}"
+                                             Stroke="{StaticResource ColorTextPrimary}"
+                                             StrokeThickness="1.5"
+                                             StrokeLineCap="Round"
+                                             StrokeLineJoin="Round"
+                                             Aspect="Uniform"
+                                             WidthRequest="28"
+                                             HeightRequest="28" />
+                            </Grid>
+                            <Label Text="{Binding TotalCertificates}"
+                                   FontFamily="InterSemiBold"
+                                   FontSize="32"
+                                   TextColor="{StaticResource ColorTextPrimary}"
+                                   VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource CardStyle}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Installed in Trust Store"
+                               FontFamily="InterSemiBold"
+                               FontSize="16"
+                               TextColor="{StaticResource ColorTextMuted}" />
+                        <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
+                            <Grid WidthRequest="28" HeightRequest="28" VerticalOptions="Center">
+                                <shapes:Path Data="{x:Static controls:IconPaths.FileBadge}"
+                                             Stroke="{StaticResource ColorSuccess}"
+                                             StrokeThickness="1.5"
+                                             StrokeLineCap="Round"
+                                             StrokeLineJoin="Round"
+                                             Aspect="Uniform"
+                                             WidthRequest="28"
+                                             HeightRequest="28" />
+                            </Grid>
+                            <Label Text="{Binding InstalledRoots}"
+                                   FontFamily="InterSemiBold"
+                                   FontSize="32"
+                                   TextColor="{StaticResource ColorSuccess}"
+                                   VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Grid.Column="3" Style="{StaticResource CardStyle}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Expiring Soon"
+                               FontFamily="InterSemiBold"
+                               FontSize="16"
+                               TextColor="{StaticResource ColorTextMuted}" />
+                        <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
+                            <Grid WidthRequest="28" HeightRequest="28" VerticalOptions="Center">
+                                <shapes:Path Data="{x:Static controls:IconPaths.CalendarClock}"
+                                             Stroke="{StaticResource ColorAccentSecondary}"
+                                             StrokeThickness="1.5"
+                                             StrokeLineCap="Round"
+                                             StrokeLineJoin="Round"
+                                             Aspect="Uniform"
+                                             WidthRequest="28"
+                                             HeightRequest="28" />
+                            </Grid>
+                            <Label Text="{Binding ExpiringSoon}"
+                                   FontFamily="InterSemiBold"
+                                   FontSize="32"
+                                   TextColor="{StaticResource ColorAccentSecondary}"
+                                   VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+            </Grid>
+
+            <Border BackgroundColor="{StaticResource ColorPanelElevated}"
+                    Stroke="{StaticResource ColorBorderSubtle}"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 10"
+                    Padding="0">
+                <Grid ColumnDefinitions="3,*">
+                    <BoxView Grid.Column="0"
+                             Color="{StaticResource ColorWarning}"
+                             WidthRequest="3" />
+                    <VerticalStackLayout Grid.Column="1"
+                                         Spacing="4"
+                                         Padding="12,10">
+                        <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                            <Grid WidthRequest="16" HeightRequest="16" VerticalOptions="Center">
+                                <shapes:Path Data="{x:Static controls:IconPaths.TriangleAlert}"
+                                             Stroke="{StaticResource ColorWarning}"
+                                             StrokeThickness="1.5"
+                                             StrokeLineCap="Round"
+                                             StrokeLineJoin="Round"
+                                             Aspect="Uniform"
+                                             WidthRequest="16"
+                                             HeightRequest="16" />
+                            </Grid>
+                            <Label Text="Certificate Use Warning"
+                                   FontFamily="InterSemiBold"
+                                   FontSize="16"
+                                   TextColor="{StaticResource ColorWarning}"
+                                   VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                        <Label Text="Certificates generated by SelfCertForge are self-signed and must never be used in production or public-facing environments. Browsers and operating systems will not trust them by default, and they provide no assurance to end users."
+                               FontFamily="InterRegular"
+                               FontSize="17"
+                               LineHeight="1.45"
+                               TextColor="{StaticResource ColorTextSecondary}" />
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+
+            <!-- About + update check -->
+            <pages:AboutSectionView />
+
+            <!-- Activity feed -->
+            <Border Style="{StaticResource CardStyle}">
+                <VerticalStackLayout Spacing="14">
+                    <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                        <Grid WidthRequest="16" HeightRequest="16" VerticalOptions="Center">
+                            <shapes:Path Data="{x:Static controls:IconPaths.Activity}"
+                                         Stroke="{StaticResource ColorTextMuted}"
+                                         StrokeThickness="1.5"
+                                         StrokeLineCap="Round"
+                                         StrokeLineJoin="Round"
+                                         Aspect="Uniform"
+                                         WidthRequest="16"
+                                         HeightRequest="16" />
+                        </Grid>
+                        <Label Text="Recent activity"
+                               FontFamily="InterSemiBold"
+                               FontSize="16"
+                               TextColor="{StaticResource ColorTextMuted}"
+                               VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+
+                    <Label Text="Nothing yet. Forge a certificate or root authority to begin."
+                           FontFamily="InterRegular"
+                           FontSize="16"
+                           TextColor="{StaticResource ColorTextMuted}"
+                           IsVisible="{Binding IsActivityEmpty}" />
+
+                    <VerticalStackLayout IsVisible="{Binding HasActivity}"
+                                         BindableLayout.ItemsSource="{Binding Activity}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ActivityRowViewModel">
+                                <Grid ColumnDefinitions="*,Auto"
+                                      ColumnSpacing="12"
+                                      Padding="0,8">
+                                    <Label Grid.Column="0"
+                                           Text="{Binding Message}"
+                                           FontFamily="InterRegular"
+                                           FontSize="16"
+                                           TextColor="{StaticResource ColorTextPrimary}"
+                                           LineBreakMode="TailTruncation" />
+                                    <Label Grid.Column="1"
+                                           Text="{Binding TimeLabel}"
+                                           FontFamily="JetBrainsMono"
+                                           FontSize="13"
+                                           TextColor="{StaticResource ColorTextMuted}"
+                                           VerticalOptions="Center" />
+                                </Grid>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentView>

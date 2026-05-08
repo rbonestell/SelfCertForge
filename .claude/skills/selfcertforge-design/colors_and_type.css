@@ -1,0 +1,162 @@
+/* SelfCertForge — Foundations
+ * Color and typography tokens. Dark-first.
+ * Import this file in any HTML preview or UI kit.
+ */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+
+:root {
+  /* ── Surfaces ─────────────────────────────────────────── */
+  --bg-forge:        #0B0C10;   /* primary background */
+  --bg-charcoal:     #12141A;   /* app shell / nav */
+  --bg-panel:        #1B1D25;   /* cards */
+  --bg-elevated:     #232631;   /* dialogs / modals */
+
+  /* ── Text ─────────────────────────────────────────────── */
+  --fg1:             #F2F3F6;   /* primary */
+  --fg2:             #B7BBC6;   /* secondary */
+  --fg3:             #7C818E;   /* muted */
+  --fg-disabled:     #555A66;
+
+  /* ── Forge accents ────────────────────────────────────── */
+  --forge-orange:    #FF6A00;
+  --forge-orange-hover:   #FF7F1A;
+  --forge-orange-pressed: #D94F00;
+  --molten-yellow:   #FFB800;
+  --ember-red:       #C0392B;
+  --hot-core:        #FFE07A;
+
+  /* ── Semantic ─────────────────────────────────────────── */
+  --success:         #38C172;
+  --warning:         #FFB800;
+  --danger:          #E5484D;
+  --info:            #6EA8FE;
+
+  /* ── Borders ──────────────────────────────────────────── */
+  --border-subtle:   #2F333D;
+  --border-strong:   #4A4F5C;
+
+  /* ── Forge gradient (hero / CTA emphasis only) ────────── */
+  --forge-gradient:  linear-gradient(135deg, #FFB800 0%, #FF6A00 55%, #C0392B 100%);
+  --forge-gradient-radial: radial-gradient(circle at 30% 30%, #FFE07A 0%, #FF6A00 40%, #C0392B 90%);
+
+  /* ── Typography ───────────────────────────────────────── */
+  --font-ui:   "Inter", "Segoe UI", "SF Pro Text", "Roboto", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", "SF Mono", ui-monospace, Menlo, monospace;
+
+  /* Type scale — desktop-comfortable. SelfCertForge is an IDE-adjacent
+     desktop tool viewed at arm's length on large monitors. Body at 16px,
+     h1 at 32px — comfortable without crossing into low-density UI territory. */
+  --fs-display: 44px;
+  --fs-h1:      32px;
+  --fs-h2:      24px;
+  --fs-h3:      20px;
+  --fs-body:    16px;
+  --fs-small:   14px;
+  --fs-micro:   12px;
+
+  --lh-tight:   1.15;
+  --lh-snug:    1.35;
+  --lh-body:    1.5;
+
+  /* ── Spacing ──────────────────────────────────────────── */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* ── Radii ────────────────────────────────────────────── */
+  --radius-sm:  6px;
+  --radius-md:  10px;
+  --radius-lg:  12px;   /* buttons */
+  --radius-xl:  16px;   /* cards */
+  --radius-2xl: 20px;   /* modals */
+  --radius-pill: 999px;
+
+  /* ── Elevation ────────────────────────────────────────── */
+  --shadow-1: 0 1px 0 rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.5);
+  --shadow-2: 0 4px 12px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.03) inset;
+  --shadow-3: 0 12px 32px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.04) inset;
+  --glow-orange: 0 0 0 1px rgba(255,106,0,0.4), 0 0 24px rgba(255,106,0,0.25);
+  --glow-ember:  0 0 24px rgba(192,57,43,0.35);
+}
+
+/* ── Base ───────────────────────────────────────────────── */
+html, body {
+  background: var(--bg-forge);
+  color: var(--fg1);
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ── Semantic typography ────────────────────────────────── */
+.display, h1.display {
+  font-family: var(--font-ui);
+  font-size: var(--fs-display);
+  line-height: var(--lh-tight);
+  letter-spacing: -0.02em;
+  font-weight: 700;
+  color: var(--fg1);
+}
+
+h1, .h1 {
+  font-size: var(--fs-h1);
+  line-height: var(--lh-tight);
+  letter-spacing: -0.015em;
+  font-weight: 600;
+  color: var(--fg1);
+}
+
+h2, .h2 {
+  font-size: var(--fs-h2);
+  line-height: var(--lh-snug);
+  letter-spacing: -0.01em;
+  font-weight: 600;
+  color: var(--fg1);
+}
+
+h3, .h3 {
+  font-size: var(--fs-h3);
+  line-height: var(--lh-snug);
+  font-weight: 600;
+  color: var(--fg1);
+}
+
+p, .body {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--fg2);
+}
+
+.small  { font-size: var(--fs-small);  color: var(--fg2); }
+.micro  { font-size: var(--fs-micro);  color: var(--fg3); letter-spacing: 0.04em; text-transform: uppercase; }
+.muted  { color: var(--fg3); }
+
+/* Monospace — only for technical artifacts */
+code, .mono, .tech {
+  font-family: var(--font-mono);
+  font-size: var(--fs-body);
+  letter-spacing: 0;
+  color: var(--fg1);
+}
+
+.label {
+  font-size: var(--fs-small);
+  color: var(--fg3);
+  font-weight: 500;
+}
+.value {
+  font-size: var(--fs-body);
+  color: var(--fg1);
+}
+.value.tech {
+  font-family: var(--font-mono);
+}

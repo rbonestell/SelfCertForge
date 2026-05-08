@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>SelfCertForge — App</title>
+<link rel="stylesheet" href="../../colors_and_type.css"/>
+<style>
+  html, body, #root { height: 100%; margin: 0; }
+  body { background: #0B0C10; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="primitives.jsx"></script>
+<script type="text/babel" src="Shell.jsx"></script>
+<script type="text/babel" src="CertificateList.jsx"></script>
+<script type="text/babel" src="CertificateDetail.jsx"></script>
+<script type="text/babel" src="ForgeDialog.jsx"></script>
+<script type="text/babel" src="EmptyState.jsx"></script>
+<script type="text/babel" src="Dashboard.jsx"></script>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const AUTHORITIES = [
+  { id: "ca-1", name: "Local Root CA" },
+  { id: "ca-2", name: "Dev Trust Authority" },
+];
+
+const SEED_CERTS = [
+  { id: "c1", name: "local.dev.forge", subject: "CN=local.dev.forge, O=SelfCertForge", issuer: "Local Root CA", status: "Trusted root", statusKind: "trusted",  expires: "30d", expiresWarning: false, cn: "local.dev.forge", org: "SelfCertForge", sans: ["dev.local", "*.dev.local", "127.0.0.1", "localhost"], issued: "2025-05-03", algorithm: "ECDSA P-256", serial: "0A:3F:21:9C:88:11:D2", sha256: "A1:F4:9C:0B:7E:21:35:DD:8F:62:11:CC:09:44:7B:E2:11:F0:9A:33:B7:CE:01:55:8D:E4:7A:99:00:1C:34:88", sha1: "9B:33:21:6E:5C:D1:11:08:7A:02:CC:11:DD:33:5F:00:00:33:F1:9A" },
+  { id: "c2", name: "api.local.dev",     subject: "CN=api.local.dev, O=Acme",        issuer: "Local Root CA", status: "Trusted root", statusKind: "trusted",  expires: "180d", cn: "api.local.dev", org: "Acme", sans: ["api.local.dev", "*.api.local.dev"], issued: "2025-04-12", algorithm: "RSA 2048", serial: "0B:11:F2:00:55:21:D2", sha256: "8B:01:9C:0B:7E:11:35:CD:9F:62:21:FF:00:44:7B:E2:11:F0:9A:33:B7:CE:01:55:8D:E4:7A:99:00:1C:34:88", sha1: "82:00:21:6E:5C:D1:11:08:7A:02:CC:11:DD:33:5F:00:00:33:F1:9A" },
+  { id: "c3", name: "*.dev.local",       subject: "CN=*.dev.local, O=Acme",          issuer: "Local Root CA", status: "Self-signed",  statusKind: "self",     expires: "90d", cn: "*.dev.local", org: "Acme", sans: ["*.dev.local"], issued: "2025-05-01", algorithm: "ECDSA P-256", serial: "0C:21:F2:00:55:21:D2", sha256: "11:01:9C:0B:7E:11:35:CD:9F:62:21:FF:00:44:7B:E2:11:F0:9A:33:B7:CE:01:55:8D:E4:7A:99:00:1C:34:88", sha1: "11:00:21:6E:5C:D1:11:08:7A:02:CC:11:DD:33:5F:00:00:33:F1:9A" },
+  { id: "c4", name: "staging.dev",       subject: "CN=staging.dev",                   issuer: "Dev Trust Authority", status: "Expires 7d", statusKind: "warn", expires: "7d", expiresWarning: true, cn: "staging.dev", org: "Acme", sans: ["staging.dev"], issued: "2024-11-12", algorithm: "RSA 2048", serial: "0D:31:F2:00", sha256: "F1:01:9C:0B:7E:11:35:CD:9F:62:21:FF:00:44:7B:E2:11:F0:9A:33:B7:CE:01:55:8D:E4:7A:99:00:1C:34:88", sha1: "F1:00:21:6E:5C:D1:11:08:7A:02:CC:11:DD:33:5F:00:00:33:F1:9A" },
+  { id: "c5", name: "legacy.test",       subject: "CN=legacy.test",                   issuer: "—",              status: "Expired",       statusKind: "expired",  expires: "-12d", cn: "legacy.test", org: "—", sans: ["legacy.test"], issued: "2023-04-12", algorithm: "RSA 2048", serial: "0E:41:F2:00", sha256: "AA:01:9C:0B:7E:11:35:CD:9F:62:21:FF:00:44:7B:E2:11:F0:9A:33:B7:CE:01:55:8D:E4:7A:99:00:1C:34:88", sha1: "AA:00:21:6E:5C:D1:11:08:7A:02:CC:11:DD:33:5F:00:00:33:F1:9A" },
+  { id: "c6", name: "internal.api",      subject: "CN=internal.api",                  issuer: "Dev Trust Authority", status: "Untrusted", statusKind: "untrusted", expires: "365d", cn: "internal.api", org: "—", sans: ["internal.api"], issued: "2025-05-01", algorithm: "ECDSA P-256", serial: "0F:51:F2:00", sha256: "BB:01:9C:0B:7E:11:35:CD:9F:62:21:FF:00:44:7B:E2:11:F0:9A:33:B7:CE:01:55:8D:E4:7A:99:00:1C:34:88", sha1: "BB:00:21:6E:5C:D1:11:08:7A:02:CC:11:DD:33:5F:00:00:33:F1:9A" },
+];
+
+const App = () => {
+  const [route, setRoute] = useState("certificates");
+  const [selectedId, setSelectedId] = useState("c1");
+  const [forgeOpen, setForgeOpen] = useState(false);
+  const [certs, setCerts] = useState(SEED_CERTS);
+
+  useEffect(() => {
+    if (window.lucide) lucide.createIcons();
+  });
+
+  const selected = certs.find(c => c.id === selectedId);
+
+  const handleForge = (data) => {
+    const newCert = {
+      id: `c${certs.length + 1}`,
+      name: data.cn,
+      subject: `CN=${data.cn}, O=SelfCertForge`,
+      issuer: AUTHORITIES.find(a => a.id === data.authority)?.name || "Local Root CA",
+      status: data.installLocally ? "Trusted root" : "Self-signed",
+      statusKind: data.installLocally ? "trusted" : "self",
+      expires: `${data.days}d`,
+      cn: data.cn, org: "SelfCertForge",
+      sans: data.sans.split(",").map(s => s.trim()).filter(Boolean),
+      issued: "today", algorithm: "ECDSA P-256",
+      serial: "10:61:F2:00", sha256: "FF:01:9C:0B:7E:11:35:CD:9F:62:21:FF:00:44:7B:E2:11:F0:9A:33:B7:CE:01:55:8D:E4:7A:99:00:1C:34:88", sha1: "FF:00:21:6E",
+    };
+    setCerts([newCert, ...certs]);
+    setSelectedId(newCert.id);
+    setForgeOpen(false);
+    setRoute("certificates");
+  };
+
+  let main;
+  if (route === "dashboard") {
+    main = <Dashboard onForge={() => setForgeOpen(true)} />;
+  } else if (route === "certificates") {
+    main = (
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(360px, 38%) 1fr", height: "100%" }}>
+        <CertificateList certificates={certs} selectedId={selectedId} onSelect={setSelectedId} />
+        <CertificateDetail cert={selected} />
+      </div>
+    );
+  } else if (route === "authorities") {
+    main = (
+      <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 600, letterSpacing: "-0.015em" }}>Root Authorities</h1>
+          <Button variant="primary" icon="hammer" onClick={() => setForgeOpen(true)}>Create Root Authority</Button>
+        </div>
+        {AUTHORITIES.map(a => (
+          <Card key={a.id}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: "#F2F3F6" }}>{a.name}</h3>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "#7C818E" }}>CN={a.name}, O=SelfCertForge</span>
+              </div>
+              <Pill kind="trusted">Installed</Pill>
+            </div>
+          </Card>
+        ))}
+      </div>
+    );
+  } else if (route === "forge") {
+    main = (
+      <EmptyState
+        icon="hammer"
+        title="Ready to forge"
+        body="Strike a fresh certificate from one of your local root authorities. Press the button below to begin."
+        ctaLabel="Forge Certificate"
+        onCta={() => setForgeOpen(true)}
+      />
+    );
+  } else if (route === "trust") {
+    main = (
+      <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
+        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 600, letterSpacing: "-0.015em" }}>Trust Store</h1>
+        <p style={{ margin: 0, fontSize: 13, color: "#B7BBC6" }}>Certificates installed in your local trust store. Read-only — managed by the OS.</p>
+        {certs.filter(c => c.statusKind === "trusted").map(c => (
+          <Card key={c.id}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>{c.name}</h3>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "#7C818E" }}>{c.subject}</span>
+              </div>
+              <Pill kind="trusted">Installed</Pill>
+            </div>
+          </Card>
+        ))}
+      </div>
+    );
+  } else {
+    main = (
+      <EmptyState icon="settings-2" title="Settings" body="Adjust default validity periods, key algorithms, and trust-store paths." />
+    );
+  }
+
+  return (
+    <React.Fragment>
+      <Shell active={route} onNav={setRoute} onForge={() => setForgeOpen(true)}>
+        {main}
+      </Shell>
+      <ForgeDialog open={forgeOpen} onClose={() => setForgeOpen(false)} onForge={handleForge} authorities={AUTHORITIES} />
+    </React.Fragment>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

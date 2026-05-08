@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Buttons</title>
+<link rel="stylesheet" href="../colors_and_type.css"/>
+<style>
+  body { margin:0; padding:22px; background: var(--bg-forge); }
+  .row { display:flex; flex-wrap:wrap; gap: 10px; align-items:center; }
+  .row + .row { margin-top: 12px; }
+  button { font-family: var(--font-ui); font-size: 14px; font-weight: 600; border-radius: 12px; padding: 10px 16px; cursor: pointer; border: 1px solid transparent; line-height: 1; letter-spacing: -0.005em; }
+  .primary { background:#FF6A00; color:#FFFFFF; }
+  .primary.hover { background:#FF7F1A; }
+  .primary.pressed { background:#D94F00; }
+  .primary.disabled { background:#3a2a1f; color:#7C818E; cursor:not-allowed; }
+  .secondary { background: transparent; color:#F2F3F6; border-color:#2F333D; }
+  .secondary.hover { background:#232631; }
+  .ghost { background: transparent; color:#B7BBC6; }
+  .ghost:hover { color:#F2F3F6; }
+  .danger { background: transparent; color:#E5484D; border-color: rgba(229,72,77,0.3); }
+  .danger.hover { background: rgba(229,72,77,0.12); border-color: rgba(229,72,77,0.55); }
+  .label { font-family: var(--font-mono); font-size: 10px; color: var(--fg3); width: 80px; }
+</style>
+</head>
+<body>
+  <div class="row">
+    <span class="label">Primary</span>
+    <button class="primary">Forge Certificate</button>
+    <button class="primary hover">Hover</button>
+    <button class="primary pressed">Pressed</button>
+    <button class="primary disabled">Disabled</button>
+  </div>
+  <div class="row">
+    <span class="label">Secondary</span>
+    <button class="secondary">Export PEM</button>
+    <button class="secondary hover">Hover</button>
+    <button class="ghost">Cancel</button>
+  </div>
+  <div class="row">
+    <span class="label">Danger</span>
+    <button class="danger">Remove authority</button>
+    <button class="danger hover">Hover</button>
+  </div>
+</body>
+</html>

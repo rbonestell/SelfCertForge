@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Certificate card</title>
+<link rel="stylesheet" href="../colors_and_type.css"/>
+<style>
+  body { margin:0; padding:20px; background: var(--bg-forge); }
+  .card { background:#1B1D25; border:1px solid #2F333D; border-radius: 16px; padding: 18px 20px; display:flex; flex-direction:column; gap: 12px; }
+  .head { display:flex; align-items:center; justify-content:space-between; gap: 12px; }
+  .title { display:flex; flex-direction:column; gap: 4px; }
+  .title h3 { margin:0; font-size: 15px; font-weight:600; color:#F2F3F6; letter-spacing:-0.005em; }
+  .title .sub { font-family: var(--font-mono); font-size: 11px; color:#7C818E; }
+  .pill { display:inline-flex; align-items:center; gap: 6px; padding: 4px 10px 4px 8px; border-radius: 999px; font-size: 11px; font-weight:600; color:#38C172; background: rgba(56,193,114,0.1); border:1px solid rgba(56,193,114,0.25); }
+  .pill .dot { width: 6px; height: 6px; border-radius: 50%; background:#38C172; box-shadow: 0 0 6px rgba(56,193,114,0.7); }
+  .meta { display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; padding-top: 6px; border-top: 1px solid #2F333D; }
+  .field .label { font-size: 10px; text-transform: uppercase; letter-spacing:.08em; color:#7C818E; margin-bottom: 4px; }
+  .field .value { font-family: var(--font-mono); font-size: 12px; color:#F2F3F6; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="head">
+      <div class="title">
+        <h3>local.dev.forge</h3>
+        <span class="sub">Issued by Local Root CA · 30d remaining</span>
+      </div>
+      <span class="pill"><span class="dot"></span>Trusted root</span>
+    </div>
+    <div class="meta">
+      <div class="field"><div class="label">Serial</div><div class="value">0A:3F:21:9C</div></div>
+      <div class="field"><div class="label">Algorithm</div><div class="value">ECDSA P-256</div></div>
+      <div class="field"><div class="label">Expires</div><div class="value">2026-06-03</div></div>
+    </div>
+  </div>
+</body>
+</html>

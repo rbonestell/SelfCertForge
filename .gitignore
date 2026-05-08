@@ -1,0 +1,78 @@
+## AI Tools
+.claude/settings.local.json
+.superpowers/
+
+## Worktrees
+.worktrees/
+
+## Temp Dirs
+**/temp/
+**/tmp/
+
+# .NET / MAUI
+**/bin/
+**/obj/
+**/*.user
+**/*.suo
+**/*.userosscache
+**/*.sln.docstates
+**/*.swp
+
+# VSCode
+.vs/
+.idea/
+*.DS_Store
+
+## Build / publish output
+publish/
+artifacts/
+TestResults/
+
+## NuGet
+**/*.nupkg
+**/*.snupkg
+**/project.lock.json
+**/project.fragment.lock.json
+**/.nuget/
+
+## Logs
+*.log
+*.binlog
+
+## OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+### macOS ###
+# General
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Icon must end with two \r
+Icon
+
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+### macOS Patch ###
+# iCloud generated files
+*.icloud

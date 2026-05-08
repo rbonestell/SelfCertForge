@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shell="clr-namespace:SelfCertForge.App.Shell"
+             xmlns:controls="clr-namespace:SelfCertForge.App.Controls"
+             xmlns:pages="clr-namespace:SelfCertForge.App.Pages"
+             x:Class="SelfCertForge.App.Shell.ShellPage"
+             x:DataType="shell:ShellViewModel"
+             BackgroundColor="{StaticResource ColorBackground}"
+             Padding="0">
+
+    <Grid ColumnDefinitions="220,1,*">
+
+        <!-- (Top bar removed — macOS title bar carries the product name. Per-page
+             Forge CTAs live on the Authorities and Forge pages where they make
+             contextual sense.) -->
+
+            <!-- Sidebar -->
+            <Grid Grid.Column="0"
+                  BackgroundColor="{StaticResource ColorSurface}"
+                  RowDefinitions="Auto,*,Auto">
+
+                <!-- Brand logo image -->
+                <Image Grid.Row="0"
+                       Source="logo_text.png"
+                       Aspect="AspectFit"
+                       HorizontalOptions="Fill"
+                       Margin="18,16,18,14" />
+
+                <!-- Nav rows -->
+                <VerticalStackLayout Grid.Row="1" Spacing="2" Padding="4,0,10,0">
+                    <controls:NavItem Label="Dashboard"
+                                      IconData="{x:Static controls:IconPaths.LayoutDashboard}"
+                                      IsActive="{Binding IsDashboard}"
+                                      Command="{Binding NavigateCommand}"
+                                      CommandParameter="Dashboard" />
+                    <controls:NavItem Label="Authorities"
+                                      IconData="{x:Static controls:IconPaths.ShieldCheck}"
+                                      IsActive="{Binding IsAuthorities}"
+                                      Command="{Binding NavigateCommand}"
+                                      CommandParameter="Authorities" />
+                    <controls:NavItem Label="Certificates"
+                                      IconData="{x:Static controls:IconPaths.FileBadge}"
+                                      IsActive="{Binding IsCertificates}"
+                                      Command="{Binding NavigateCommand}"
+                                      CommandParameter="Certificates" />
+                    <controls:NavItem Label="Settings"
+                                      IconData="{x:Static controls:IconPaths.Settings2}"
+                                      IsActive="{Binding IsSettings}"
+                                      ShowBadge="{Binding IsUpdateAvailable}"
+                                      Command="{Binding NavigateCommand}"
+                                      CommandParameter="Settings" />
+                </VerticalStackLayout>
+
+                <!-- Version label -->
+                <Label Grid.Row="2"
+                       Text="{Binding Settings.CurrentVersion, StringFormat='v{0}'}"
+                       FontFamily="JetBrainsMono"
+                       FontSize="12"
+                       TextColor="{StaticResource ColorTextMuted}"
+                       HorizontalOptions="Center"
+                       Margin="0,0,0,16" />
+
+            </Grid>
+
+            <BoxView Grid.Column="1" Color="{StaticResource ColorBorderSubtle}" />
+
+            <!-- Content slot — route-aware view swap.
+                 Each route lives inside a wrapper Grid that retains the ShellViewModel
+                 binding context. Putting IsVisible on the page itself does not work
+                 because each page sets its own BindingContext in its ctor, so the
+                 IsVisible binding would resolve against the wrong VM.
+
+                 The brand mark sits at the bottom of the z-stack as a fixed watermark.
+                 Pages have transparent backgrounds so it shows through; cards keep
+                 their ColorPanel surface so they read above the mark. -->
+            <Grid Grid.Column="2" BackgroundColor="{StaticResource ColorBackground}">
+
+                <!-- Watermark (fixed; never scrolls because it lives outside any page ScrollView) -->
+                <!-- Watermark. Reference the rasterized PNG name (MAUI convention)
+                     even though the source asset is brand_mark.svg. The brand mark's
+                     dark stone body blends into the page bg; the warm sparks carry it. -->
+                <Image Source="brand_mark.png"
+                       WidthRequest="500"
+                       HeightRequest="500"
+                       HorizontalOptions="End"
+                       VerticalOptions="Start"
+                       TranslationX="25"
+                       TranslationY="-100"
+                       Aspect="AspectFit"
+                       InputTransparent="True"
+                       Opacity="0.3" />
+
+                <!-- Real page: Dashboard -->
+                <Grid IsVisible="{Binding IsDashboard}">
+                    <pages:DashboardView />
+                </Grid>
+
+                <!-- Real page: Authorities -->
+                <Grid IsVisible="{Binding IsAuthorities}">
+                    <pages:AuthoritiesView />
+                </Grid>
+
+                <!-- Real page: Certificates -->
+                <Grid IsVisible="{Binding IsCertificates}">
+                    <pages:CertificatesView />
+                </Grid>
+
+                <!-- Real page: Settings -->
+                <Grid x:Name="SettingsViewHost" IsVisible="{Binding IsSettings}">
+                    <pages:SettingsView />
+                </Grid>
+
+            </Grid>
+
+    </Grid>
+
+</ContentPage>

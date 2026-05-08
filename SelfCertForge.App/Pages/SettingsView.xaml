@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:SelfCertForge.App.Controls"
+             xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"
+             x:Class="SelfCertForge.App.Pages.SettingsView">
+
+    <Grid RowDefinitions="Auto,1,*" BackgroundColor="Transparent">
+
+        <!-- Header -->
+        <HorizontalStackLayout Grid.Row="0" Spacing="16" Padding="32,28,32,20" VerticalOptions="Center">
+            <Grid WidthRequest="44" HeightRequest="44" VerticalOptions="Center">
+                <shapes:Path Data="{x:Static controls:IconPaths.Settings2}"
+                             Stroke="{StaticResource ColorTextPrimary}"
+                             StrokeThickness="1.5"
+                             StrokeLineCap="Round"
+                             StrokeLineJoin="Round"
+                             Aspect="Uniform"
+                             WidthRequest="44"
+                             HeightRequest="44" />
+            </Grid>
+            <VerticalStackLayout Spacing="6" VerticalOptions="Center">
+                <Label Text="Settings"
+                       FontFamily="InterSemiBold"
+                       FontSize="32"
+                       TextColor="{StaticResource ColorTextPrimary}" />
+                <Label Text="Application preferences and configuration."
+                       FontFamily="InterRegular"
+                       FontSize="16"
+                       TextColor="{StaticResource ColorTextMuted}" />
+            </VerticalStackLayout>
+        </HorizontalStackLayout>
+
+        <BoxView Grid.Row="1" Color="{StaticResource ColorBorderSubtle}" />
+
+        <controls:EmptyState Grid.Row="2" Title="Settings coming soon." />
+
+    </Grid>
+
+</ContentView>

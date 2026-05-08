@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Forge gradient</title>
+<link rel="stylesheet" href="../colors_and_type.css"/>
+<style>
+  body { margin:0; padding:20px; background: var(--bg-forge); }
+  .wrap { display:grid; grid-template-columns: 1.4fr 1fr; gap:14px; }
+  .hero { background: var(--forge-gradient); border-radius: 16px; padding: 22px; display:flex; flex-direction:column; justify-content:space-between; min-height: 160px; color: #1B1D25; }
+  .hero h2 { margin:0; color:#0B0C10; font-size: 20px; letter-spacing:-0.01em; }
+  .hero p { margin:6px 0 0; color: rgba(11,12,16,.75); font-size: 13px; max-width: 32ch; }
+  .stops { display:flex; gap: 8px; margin-top: 14px; }
+  .stop { font-family: var(--font-mono); font-size: 10px; color: rgba(11,12,16,.8); background: rgba(11,12,16,.12); padding: 4px 8px; border-radius: 999px; }
+  .rules { background: var(--bg-panel); border:1px solid var(--border-subtle); border-radius: 16px; padding: 16px; }
+  .rules h3 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing:.08em; color: var(--fg3); font-weight: 600; }
+  .rules ul { margin: 0; padding-left: 16px; font-size: 12px; color: var(--fg2); display:flex; flex-direction:column; gap: 5px; }
+  .rules li b { color: #38C172; font-weight: 600; }
+  .rules li.no b { color: #E5484D; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <h2>Forge a new certificate</h2>
+        <p>Strike fresh trust from a local root authority.</p>
+      </div>
+      <div class="stops">
+        <span class="stop">#FFB800 · 0%</span>
+        <span class="stop">#FF6A00 · 55%</span>
+        <span class="stop">#C0392B · 100%</span>
+      </div>
+    </div>
+    <div class="rules">
+      <h3>Use only for</h3>
+      <ul>
+        <li><b>Yes</b> — hero sections</li>
+        <li><b>Yes</b> — primary-CTA emphasis</li>
+        <li><b>Yes</b> — empty states</li>
+        <li><b>Yes</b> — logo visuals</li>
+        <li class="no"><b>No</b> — page backgrounds</li>
+        <li class="no"><b>No</b> — text fills</li>
+        <li class="no"><b>No</b> — small UI elements</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shell="clr-namespace:SelfCertForge.App.Shell"
+             x:Class="SelfCertForge.App.Shell.ShellPage"
+             x:DataType="shell:ShellViewModel"
+             BackgroundColor="{StaticResource ColorBackground}"
+             Padding="0">
+
+    <Grid RowDefinitions="44,1,*">
+
+        <!-- Top bar -->
+        <Grid Grid.Row="0"
+              BackgroundColor="{StaticResource ColorSurface}"
+              ColumnDefinitions="*,Auto"
+              Padding="20,0">
+            <Label Grid.Column="0"
+                   Text="SelfCertForge"
+                   FontFamily="InterSemiBold"
+                   FontSize="22"
+                   TextColor="{StaticResource ColorTextPrimary}"
+                   VerticalOptions="Center" />
+            <Button Grid.Column="1"
+                    Text="Forge Certificate"
+                    FontFamily="InterSemiBold"
+                    FontSize="14"
+                    TextColor="{StaticResource ColorBackground}"
+                    BackgroundColor="{StaticResource ColorAccentPrimary}"
+                    CornerRadius="10"
+                    HeightRequest="30"
+                    Padding="14,0"
+                    BorderWidth="0"
+                    VerticalOptions="Center" />
+        </Grid>
+
+        <BoxView Grid.Row="1" Color="{StaticResource ColorBorderSubtle}" />
+
+        <!-- Sidebar + content -->
+        <Grid Grid.Row="2" ColumnDefinitions="220,1,*">
+
+            <!-- Sidebar -->
+            <Grid Grid.Column="0"
+                  BackgroundColor="{StaticResource ColorSurface}"
+                  RowDefinitions="Auto,*,Auto">
+
+                <!-- Brand header -->
+                <Grid Grid.Row="0"
+                      ColumnDefinitions="Auto,*"
+                      ColumnSpacing="10"
+                      Padding="18,18,18,20">
+                    <Image Grid.Column="0"
+                           Source="brand_icon.png"
+                           WidthRequest="28"
+                           HeightRequest="28"
+                           VerticalOptions="Center" />
+                    <Label Grid.Column="1"
+                           Text="SelfCertForge"
+                           FontFamily="InterSemiBold"
+                           FontSize="22"
+                           TextColor="{StaticResource ColorTextPrimary}"
+                           VerticalOptions="Center" />
+                </Grid>
+
+                <!-- Nav rows -->
+                <VerticalStackLayout Grid.Row="1" Spacing="2" Padding="10,0">
+
+                    <Border StrokeThickness="0" StrokeShape="RoundRectangle 8" Padding="14,9">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding NavigateCommand}" CommandParameter="Dashboard" />
+                        </Border.GestureRecognizers>
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding IsDashboard}" Value="True">
+                                <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Label Text="Dashboard"
+                               FontFamily="InterRegular"
+                               FontSize="22"
+                               TextColor="{StaticResource ColorTextSecondary}"
+                               VerticalOptions="Center">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding IsDashboard}" Value="True">
+                                    <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
+                                    <Setter Property="FontFamily" Value="InterSemiBold" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                    </Border>
+
+                    <Border StrokeThickness="0" StrokeShape="RoundRectangle 8" Padding="14,9">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding NavigateCommand}" CommandParameter="Authorities" />
+                        </Border.GestureRecognizers>
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding IsAuthorities}" Value="True">
+                                <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Label Text="Authorities"
+                               FontFamily="InterRegular"
+                               FontSize="22"
+                               TextColor="{StaticResource ColorTextSecondary}"
+                               VerticalOptions="Center">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding IsAuthorities}" Value="True">
+                                    <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
+                                    <Setter Property="FontFamily" Value="InterSemiBold" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                    </Border>
+
+                    <Border StrokeThickness="0" StrokeShape="RoundRectangle 8" Padding="14,9">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding NavigateCommand}" CommandParameter="Certificates" />
+                        </Border.GestureRecognizers>
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding IsCertificates}" Value="True">
+                                <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Label Text="Certificates"
+                               FontFamily="InterRegular"
+                               FontSize="22"
+                               TextColor="{StaticResource ColorTextSecondary}"
+                               VerticalOptions="Center">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding IsCertificates}" Value="True">
+                                    <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
+                                    <Setter Property="FontFamily" Value="InterSemiBold" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                    </Border>
+
+                    <Border StrokeThickness="0" StrokeShape="RoundRectangle 8" Padding="14,9">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding NavigateCommand}" CommandParameter="Forge" />
+                        </Border.GestureRecognizers>
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding IsForge}" Value="True">
+                                <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Label Text="Forge"
+                               FontFamily="InterRegular"
+                               FontSize="22"
+                               TextColor="{StaticResource ColorTextSecondary}"
+                               VerticalOptions="Center">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding IsForge}" Value="True">
+                                    <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
+                                    <Setter Property="FontFamily" Value="InterSemiBold" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                    </Border>
+
+                    <Border StrokeThickness="0" StrokeShape="RoundRectangle 8" Padding="14,9">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding NavigateCommand}" CommandParameter="TrustStore" />
+                        </Border.GestureRecognizers>
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding IsTrustStore}" Value="True">
+                                <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Label Text="Trust Store"
+                               FontFamily="InterRegular"
+                               FontSize="22"
+                               TextColor="{StaticResource ColorTextSecondary}"
+                               VerticalOptions="Center">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding IsTrustStore}" Value="True">
+                                    <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
+                                    <Setter Property="FontFamily" Value="InterSemiBold" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                    </Border>
+
+                    <Border StrokeThickness="0" StrokeShape="RoundRectangle 8" Padding="14,9">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding NavigateCommand}" CommandParameter="Settings" />
+                        </Border.GestureRecognizers>
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding IsSettings}" Value="True">
+                                <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                            </DataTrigger>
+                        </Border.Triggers>
+                        <Label Text="Settings"
+                               FontFamily="InterRegular"
+                               FontSize="22"
+                               TextColor="{StaticResource ColorTextSecondary}"
+                               VerticalOptions="Center">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding IsSettings}" Value="True">
+                                    <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
+                                    <Setter Property="FontFamily" Value="InterSemiBold" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                    </Border>
+
+                </VerticalStackLayout>
+
+                <!-- Footer status -->
+                <Grid Grid.Row="2" Padding="20,12,20,16" ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                    <Ellipse Grid.Column="0"
+                             WidthRequest="6"
+                             HeightRequest="6"
+                             Fill="{StaticResource ColorSuccess}"
+                             VerticalOptions="Center" />
+                    <Label Grid.Column="1"
+                           Text="Trust store synced"
+                           FontFamily="InterRegular"
+                           FontSize="13"
+                           TextColor="{StaticResource ColorTextMuted}"
+                           VerticalOptions="Center" />
+                </Grid>
+
+            </Grid>
+
+            <BoxView Grid.Column="1" Color="{StaticResource ColorBorderSubtle}" />
+
+            <!-- Content slot -->
+            <ContentView Grid.Column="2"
+                         BackgroundColor="{StaticResource ColorBackground}"
+                         Padding="24">
+                <VerticalStackLayout Spacing="10" VerticalOptions="Center" HorizontalOptions="Center">
+                    <Label Text="{Binding CurrentRoute}"
+                           FontFamily="InterSemiBold"
+                           FontSize="36"
+                           TextColor="{StaticResource ColorTextPrimary}"
+                           HorizontalOptions="Center" />
+                    <Label Text="Page coming in a later section."
+                           FontFamily="InterRegular"
+                           FontSize="22"
+                           TextColor="{StaticResource ColorTextMuted}"
+                           HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </ContentView>
+
+        </Grid>
+
+    </Grid>
+
+</ContentPage>

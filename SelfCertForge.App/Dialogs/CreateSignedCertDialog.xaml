@@ -1,0 +1,594 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:SelfCertForge.Core.Presentation;assembly=SelfCertForge.Core"
+             xmlns:controls="clr-namespace:SelfCertForge.App.Controls"
+             x:Class="SelfCertForge.App.Dialogs.CreateSignedCertDialog"
+             x:DataType="vm:CreateSignedCertDialogViewModel"
+             BackgroundColor="#B2000000">
+
+    <Grid>
+
+        <!-- Centered card -->
+        <Border BackgroundColor="{StaticResource ColorPanelElevated}"
+                Stroke="{StaticResource ColorBorderSubtle}"
+                StrokeThickness="1"
+                StrokeShape="RoundRectangle 12"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                WidthRequest="500">
+
+            <VerticalStackLayout Spacing="14" Padding="24">
+
+                <!-- Header -->
+                <VerticalStackLayout Spacing="4" Margin="0,0,0,4">
+                    <Label Text="Create signed certificate"
+                           FontFamily="InterSemiBold"
+                           FontSize="22" TextColor="{StaticResource ColorTextPrimary}" />
+                    <Label Text="{Binding IssuerName, StringFormat='Signed by {0}.'}"
+                           FontFamily="InterRegular"
+                           FontSize="15" TextColor="{StaticResource ColorTextMuted}" />
+                </VerticalStackLayout>
+
+                <!-- Common Name -->
+                <VerticalStackLayout Spacing="5">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="Common Name (CN)"
+                               FontFamily="InterRegular" FontSize="15" TextColor="{StaticResource ColorTextSecondary}" />
+                        <Label Grid.Column="1" Text="required"
+                               FontFamily="InterRegular" FontSize="15" TextColor="{StaticResource ColorTextMuted}" />
+                    </Grid>
+                    <Border BackgroundColor="{StaticResource ColorSurface}"
+                            Stroke="{StaticResource ColorBorderSubtle}"
+                            StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                            Padding="12,0" HeightRequest="40">
+                        <Entry Text="{Binding CommonName, Mode=TwoWay}"
+                               Placeholder="api.local"
+                               IsEnabled="{Binding IsNotCreating}"
+                               FontFamily="JetBrainsMono" FontSize="16" TextColor="{StaticResource ColorTextPrimary}"
+                               PlaceholderColor="{StaticResource ColorTextMuted}"
+                               BackgroundColor="Transparent" />
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Subject Alt Names -->
+                <VerticalStackLayout Spacing="5">
+                    <Label Text="Subject Alt Names"
+                           FontFamily="InterRegular" FontSize="15" TextColor="{StaticResource ColorTextSecondary}" />
+
+                    <!-- Add row: type toggle + value entry + add button -->
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+
+                        <!-- DNS / IP toggle -->
+                        <Grid Grid.Column="0" ColumnDefinitions="*,*" ColumnSpacing="0"
+                              IsEnabled="{Binding IsNotCreating}">
+                            <Border Grid.Column="0" BackgroundColor="Transparent"
+                                    Stroke="{StaticResource ColorBorderSubtle}"
+                                    StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                                    HeightRequest="40" WidthRequest="52">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding NewSanType}" Value="DNS">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                                        <Setter Property="Stroke" Value="{StaticResource ColorAccentPrimary}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnSanTypeDns" />
+                                </Border.GestureRecognizers>
+                                <Label Text="DNS" FontFamily="JetBrainsMono" FontSize="13"
+                                       HorizontalOptions="Center" VerticalOptions="Center">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding NewSanType}" Value="DNS">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" Binding="{Binding NewSanType}" Value="IP">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextMuted}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+                            <Border Grid.Column="1" BackgroundColor="Transparent"
+                                    Stroke="{StaticResource ColorBorderSubtle}"
+                                    StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                                    HeightRequest="40" WidthRequest="44">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding NewSanType}" Value="IP">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                                        <Setter Property="Stroke" Value="{StaticResource ColorAccentPrimary}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnSanTypeIp" />
+                                </Border.GestureRecognizers>
+                                <Label Text="IP" FontFamily="JetBrainsMono" FontSize="13"
+                                       HorizontalOptions="Center" VerticalOptions="Center">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding NewSanType}" Value="IP">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" Binding="{Binding NewSanType}" Value="DNS">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextMuted}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+                        </Grid>
+
+                        <!-- Value entry -->
+                        <Border Grid.Column="1" BackgroundColor="{StaticResource ColorSurface}"
+                                Stroke="{StaticResource ColorBorderSubtle}"
+                                StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                                Padding="12,0" HeightRequest="40">
+                            <Entry Text="{Binding NewSanValue, Mode=TwoWay}"
+                                   Placeholder="{Binding NewSanPlaceholder}"
+                                   IsEnabled="{Binding IsNotCreating}"
+                                   FontFamily="JetBrainsMono" FontSize="15"
+                                   TextColor="{StaticResource ColorTextPrimary}"
+                                   PlaceholderColor="{StaticResource ColorTextMuted}"
+                                   BackgroundColor="Transparent" />
+                        </Border>
+
+                        <!-- Add button -->
+                        <Button Grid.Column="2" Text="Add"
+                                Command="{Binding AddSanCommand}"
+                                IsEnabled="{Binding IsNotCreating}"
+                                FontFamily="InterSemiBold" FontSize="14"
+                                TextColor="{StaticResource ColorTextSecondary}"
+                                BackgroundColor="Transparent"
+                                BorderColor="{StaticResource ColorBorderSubtle}"
+                                BorderWidth="1" CornerRadius="8"
+                                HeightRequest="40" Padding="14,0" />
+                    </Grid>
+
+                    <!-- SAN list / empty state -->
+                    <Border IsVisible="{Binding HasSanEntries, Converter={StaticResource InverseBool}}"
+                            BackgroundColor="{StaticResource ColorSurface}"
+                            Stroke="{StaticResource ColorBorderSubtle}"
+                            StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                            Padding="16,12">
+                        <Label Text="No subject alt names added."
+                               FontFamily="InterRegular" FontSize="14"
+                               TextColor="{StaticResource ColorTextMuted}"
+                               HorizontalOptions="Center" />
+                    </Border>
+
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding SanEntries}"
+                                         Spacing="4"
+                                         IsVisible="{Binding HasSanEntries}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:SanEntryViewModel">
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8"
+                                      BackgroundColor="{StaticResource ColorSurface}"
+                                      Padding="10,7">
+                                    <Border Grid.Column="0"
+                                            BackgroundColor="{StaticResource ColorPanel}"
+                                            Stroke="{StaticResource ColorBorderSubtle}"
+                                            StrokeThickness="1"
+                                            StrokeShape="RoundRectangle 4"
+                                            Padding="6,2">
+                                        <Label Text="{Binding Type}"
+                                               FontFamily="JetBrainsMono" FontSize="12"
+                                               TextColor="{StaticResource ColorTextMuted}"
+                                               VerticalOptions="Center" />
+                                    </Border>
+                                    <Label Grid.Column="1"
+                                           Text="{Binding Value}"
+                                           FontFamily="JetBrainsMono" FontSize="14"
+                                           TextColor="{StaticResource ColorTextPrimary}"
+                                           VerticalOptions="Center"
+                                           LineBreakMode="TailTruncation" />
+                                    <Border Grid.Column="2"
+                                            BackgroundColor="Transparent"
+                                            Stroke="Transparent" StrokeThickness="0"
+                                            Padding="6,4">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding DeleteCommand}" />
+                                        </Border.GestureRecognizers>
+                                        <Path Data="{x:Static controls:IconPaths.X}"
+                                              Stroke="{StaticResource ColorTextMuted}"
+                                              StrokeThickness="1.5"
+                                              WidthRequest="14" HeightRequest="14"
+                                              Aspect="Uniform" />
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+
+                <!-- Key Usage / Extended Key Usage -->
+                <VerticalStackLayout Spacing="12" IsEnabled="{Binding IsNotCreating}">
+
+                    <!-- Key Usage — 2-wide grid (9 items, last spans both columns) -->
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Key Usage"
+                               FontFamily="InterRegular" FontSize="15" TextColor="{StaticResource ColorTextSecondary}" />
+                        <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto"
+                              ColumnSpacing="8" RowSpacing="6">
+
+                            <!-- Row 0 -->
+                            <Border Grid.Row="0" Grid.Column="0"
+                                    BackgroundColor="Transparent" Stroke="{StaticResource ColorBorderSubtle}"
+                                    StrokeThickness="1" StrokeShape="RoundRectangle 8" HeightRequest="34" Padding="12,0">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding KeyUsageDigitalSignature}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                                        <Setter Property="Stroke" Value="{StaticResource ColorAccentPrimary}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnKeyUsageDigitalSignatureTapped" />
+                                </Border.GestureRecognizers>
+                                <Label Text="Digital Signature" FontFamily="InterRegular" FontSize="13" VerticalOptions="Center">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding KeyUsageDigitalSignature}" Value="True">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" Binding="{Binding KeyUsageDigitalSignature}" Value="False">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextMuted}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+                            <Border Grid.Row="0" Grid.Column="1"
+                                    BackgroundColor="Transparent" Stroke="{StaticResource ColorBorderSubtle}"
+                                    StrokeThickness="1" StrokeShape="RoundRectangle 8" HeightRequest="34" Padding="12,0">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding KeyUsageNonRepudiation}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                                        <Setter Property="Stroke" Value="{StaticResource ColorAccentPrimary}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnKeyUsageNonRepudiationTapped" />
+                                </Border.GestureRecognizers>
+                                <Label Text="Non-Repudiation" FontFamily="InterRegular" FontSize="13" VerticalOptions="Center">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding KeyUsageNonRepudiation}" Value="True">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" Binding="{Binding KeyUsageNonRepudiation}" Value="False">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextMuted}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+
+                            <!-- Row 1 -->
+                            <Border Grid.Row="1" Grid.Column="0"
+                                    BackgroundColor="Transparent" Stroke="{StaticResource ColorBorderSubtle}"
+                                    StrokeThickness="1" StrokeShape="RoundRectangle 8" HeightRequest="34" Padding="12,0">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding KeyUsageKeyEncipherment}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                                        <Setter Property="Stroke" Value="{StaticResource ColorAccentPrimary}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnKeyUsageKeyEnciphermentTapped" />
+                                </Border.GestureRecognizers>
+                                <Label Text="Key Encipherment" FontFamily="InterRegular" FontSize="13" VerticalOptions="Center">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding KeyUsageKeyEncipherment}" Value="True">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" Binding="{Binding KeyUsageKeyEncipherment}" Value="False">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextMuted}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+                            <Border Grid.Row="1" Grid.Column="1"
+                                    BackgroundColor="Transparent" Stroke="{StaticResource ColorBorderSubtle}"
+                                    StrokeThickness="1" StrokeShape="RoundRectangle 8" HeightRequest="34" Padding="12,0">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding KeyUsageDataEncipherment}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                                        <Setter Property="Stroke" Value="{StaticResource ColorAccentPrimary}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnKeyUsageDataEnciphermentTapped" />
+                                </Border.GestureRecognizers>
+                                <Label Text="Data Encipherment" FontFamily="InterRegular" FontSize="13" VerticalOptions="Center">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding KeyUsageDataEncipherment}" Value="True">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" Binding="{Binding KeyUsageDataEncipherment}" Value="False">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextMuted}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+
+                            <!-- Row 2: Key Agreement spans both columns -->
+                            <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                                    HorizontalOptions="Fill"
+                                    BackgroundColor="Transparent" Stroke="{StaticResource ColorBorderSubtle}"
+                                    StrokeThickness="1" StrokeShape="RoundRectangle 8" HeightRequest="34" Padding="12,0">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding KeyUsageKeyAgreement}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                                        <Setter Property="Stroke" Value="{StaticResource ColorAccentPrimary}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnKeyUsageKeyAgreementTapped" />
+                                </Border.GestureRecognizers>
+                                <Label Text="Key Agreement" FontFamily="InterRegular" FontSize="13" VerticalOptions="Center">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding KeyUsageKeyAgreement}" Value="True">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" Binding="{Binding KeyUsageKeyAgreement}" Value="False">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextMuted}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+
+                            <!-- Row 3: Encipher Only | Decipher Only -->
+                            <Border Grid.Row="3" Grid.Column="0"
+                                    BackgroundColor="Transparent" Stroke="{StaticResource ColorBorderSubtle}"
+                                    StrokeThickness="1" StrokeShape="RoundRectangle 8" HeightRequest="34" Padding="12,0"
+                                    Opacity="1">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding KeyUsageEncipherOnly}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                                        <Setter Property="Stroke" Value="{StaticResource ColorAccentPrimary}" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Border" Binding="{Binding CanSetEncipherDecipher}" Value="False">
+                                        <Setter Property="Opacity" Value="0.35" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnKeyUsageEncipherOnlyTapped" />
+                                </Border.GestureRecognizers>
+                                <Label Text="Encipher Only" FontFamily="InterRegular" FontSize="13" VerticalOptions="Center">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding KeyUsageEncipherOnly}" Value="True">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" Binding="{Binding KeyUsageEncipherOnly}" Value="False">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextMuted}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+                            <Border Grid.Row="3" Grid.Column="1"
+                                    BackgroundColor="Transparent" Stroke="{StaticResource ColorBorderSubtle}"
+                                    StrokeThickness="1" StrokeShape="RoundRectangle 8" HeightRequest="34" Padding="12,0"
+                                    Opacity="1">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding KeyUsageDecipherOnly}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                                        <Setter Property="Stroke" Value="{StaticResource ColorAccentPrimary}" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Border" Binding="{Binding CanSetEncipherDecipher}" Value="False">
+                                        <Setter Property="Opacity" Value="0.35" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnKeyUsageDecipherOnlyTapped" />
+                                </Border.GestureRecognizers>
+                                <Label Text="Decipher Only" FontFamily="InterRegular" FontSize="13" VerticalOptions="Center">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding KeyUsageDecipherOnly}" Value="True">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" Binding="{Binding KeyUsageDecipherOnly}" Value="False">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextMuted}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+
+                        </Grid>
+                    </VerticalStackLayout>
+
+                    <!-- Extended Key Usage — 2-wide grid (2 items) -->
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Extended Key Usage"
+                               FontFamily="InterRegular" FontSize="15" TextColor="{StaticResource ColorTextSecondary}" />
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+
+                            <Border Grid.Column="0"
+                                    BackgroundColor="Transparent" Stroke="{StaticResource ColorBorderSubtle}"
+                                    StrokeThickness="1" StrokeShape="RoundRectangle 8" HeightRequest="34" Padding="12,0">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding EkuServerAuth}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                                        <Setter Property="Stroke" Value="{StaticResource ColorAccentPrimary}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnEkuServerAuthTapped" />
+                                </Border.GestureRecognizers>
+                                <Label Text="Server Authentication" FontFamily="InterRegular" FontSize="13" VerticalOptions="Center">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding EkuServerAuth}" Value="True">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" Binding="{Binding EkuServerAuth}" Value="False">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextMuted}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+
+                            <Border Grid.Column="1"
+                                    BackgroundColor="Transparent" Stroke="{StaticResource ColorBorderSubtle}"
+                                    StrokeThickness="1" StrokeShape="RoundRectangle 8" HeightRequest="34" Padding="12,0">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding EkuClientAuth}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                                        <Setter Property="Stroke" Value="{StaticResource ColorAccentPrimary}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnEkuClientAuthTapped" />
+                                </Border.GestureRecognizers>
+                                <Label Text="Client Authentication" FontFamily="InterRegular" FontSize="13" VerticalOptions="Center">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding EkuClientAuth}" Value="True">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" Binding="{Binding EkuClientAuth}" Value="False">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextMuted}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+
+                        </Grid>
+                    </VerticalStackLayout>
+
+                </VerticalStackLayout>
+
+                <!-- Validity / Key size row -->
+                <Grid ColumnDefinitions="130,*" ColumnSpacing="12">
+                    <VerticalStackLayout Grid.Column="0" Spacing="5">
+                        <Label Text="Validity (days)"
+                               FontFamily="InterRegular" FontSize="15" TextColor="{StaticResource ColorTextSecondary}" />
+                        <Border BackgroundColor="{StaticResource ColorSurface}"
+                                Stroke="{StaticResource ColorBorderSubtle}"
+                                StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                                Padding="12,0" HeightRequest="40">
+                            <Entry Text="{Binding ValidityDays, Mode=TwoWay}"
+                                   Keyboard="Numeric"
+                                   IsEnabled="{Binding IsNotCreating}"
+                                   FontFamily="JetBrainsMono" FontSize="16" TextColor="{StaticResource ColorTextPrimary}"
+                                   BackgroundColor="Transparent" />
+                        </Border>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Column="1" Spacing="5">
+                        <Label Text="Key size (bits)"
+                               FontFamily="InterRegular" FontSize="15" TextColor="{StaticResource ColorTextSecondary}" />
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8" IsEnabled="{Binding IsNotCreating}">
+                            <Border Grid.Column="0" BackgroundColor="Transparent"
+                                    Stroke="{StaticResource ColorBorderSubtle}"
+                                    StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                                    HeightRequest="36">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding KeyBits}" Value="2048">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                                        <Setter Property="Stroke" Value="{StaticResource ColorAccentPrimary}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnKeyBits2048" />
+                                </Border.GestureRecognizers>
+                                <Label Text="2048" FontFamily="JetBrainsMono" FontSize="15"
+                                       TextColor="{StaticResource ColorTextMuted}"
+                                       HorizontalOptions="Center" VerticalOptions="Center">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding KeyBits}" Value="2048">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+                            <Border Grid.Column="1" BackgroundColor="Transparent"
+                                    Stroke="{StaticResource ColorBorderSubtle}"
+                                    StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                                    HeightRequest="36">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding KeyBits}" Value="3072">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                                        <Setter Property="Stroke" Value="{StaticResource ColorAccentPrimary}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnKeyBits3072" />
+                                </Border.GestureRecognizers>
+                                <Label Text="3072" FontFamily="JetBrainsMono" FontSize="15"
+                                       TextColor="{StaticResource ColorTextMuted}"
+                                       HorizontalOptions="Center" VerticalOptions="Center">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding KeyBits}" Value="3072">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+                            <Border Grid.Column="2" BackgroundColor="Transparent"
+                                    Stroke="{StaticResource ColorBorderSubtle}"
+                                    StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                                    HeightRequest="36">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding KeyBits}" Value="4096">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                                        <Setter Property="Stroke" Value="{StaticResource ColorAccentPrimary}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnKeyBits4096" />
+                                </Border.GestureRecognizers>
+                                <Label Text="4096" FontFamily="JetBrainsMono" FontSize="15"
+                                       TextColor="{StaticResource ColorTextMuted}"
+                                       HorizontalOptions="Center" VerticalOptions="Center">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding KeyBits}" Value="4096">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Grid>
+
+                <!-- Error -->
+                <Label Text="{Binding ErrorMessage}"
+                       FontFamily="InterRegular" FontSize="15"
+                       TextColor="{StaticResource ColorDanger}"
+                       IsVisible="{Binding HasError}" />
+
+                <!-- Actions -->
+                <HorizontalStackLayout HorizontalOptions="End" Spacing="10" Margin="0,4,0,0">
+                    <Button Text="Cancel"
+                            FontFamily="InterSemiBold" FontSize="15" TextColor="{StaticResource ColorTextSecondary}"
+                            BackgroundColor="Transparent"
+                            BorderColor="{StaticResource ColorBorderSubtle}"
+                            BorderWidth="1" CornerRadius="10"
+                            HeightRequest="42" Padding="14,0"
+                            IsEnabled="{Binding IsNotCreating}"
+                            Command="{Binding CancelCommand}" />
+                    <!-- CTA: shows text when idle, spinner when creating -->
+                    <Border BackgroundColor="{StaticResource ColorAccentPrimary}"
+                            Stroke="{StaticResource Transparent}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 10"
+                            Padding="18,0"
+                            HeightRequest="42"
+                            IsVisible="{Binding IsNotCreating}">
+                        <Border.Behaviors>
+                            <controls:PrimaryButtonBehavior />
+                        </Border.Behaviors>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding CreateCommand}" />
+                        </Border.GestureRecognizers>
+                        <Label Text="Create signed certificate"
+                               FontFamily="InterSemiBold"
+                               FontSize="15"
+                               TextColor="White"
+                               VerticalOptions="Center"
+                               HorizontalOptions="Center" />
+                    </Border>
+                    <Border BackgroundColor="{StaticResource ColorAccentPrimary}"
+                            StrokeThickness="0" StrokeShape="RoundRectangle 10"
+                            IsVisible="{Binding IsCreating}"
+                            HeightRequest="42" WidthRequest="240">
+                        <ActivityIndicator IsRunning="{Binding IsCreating}"
+                                           Color="White"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center" />
+                    </Border>
+                </HorizontalStackLayout>
+
+            </VerticalStackLayout>
+        </Border>
+
+    </Grid>
+</ContentPage>

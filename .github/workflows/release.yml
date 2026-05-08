@@ -1,0 +1,341 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+  id-token: write   # required for Azure OIDC federated auth
+
+env:
+  DOTNET_VERSION: "10.0.101"
+  APP_PROJECT: "SelfCertForge.App/SelfCertForge.App.csproj"
+  APP_NAME: "SelfCertForge"
+  APPLE_BUNDLE_ID: "com.rbonestell.selfcertforge.app"
+  REPO_URL: "https://github.com/rbonestell/SelfCertForge"
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            rid: maccatalyst-arm64
+            channel: osx-arm64
+            framework: net10.0-maccatalyst
+          # - os: macos-13
+          #   rid: maccatalyst-x64
+          #   channel: osx-x64
+          #   framework: net10.0-maccatalyst
+          - os: windows-latest
+            rid: win-x64
+            channel: win-x64
+            framework: net10.0-windows10.0.19041.0
+          - os: windows-latest
+            rid: win-arm64
+            channel: win-arm64
+            framework: net10.0-windows10.0.19041.0
+    runs-on: ${{ matrix.os }}
+    # Bind to the `release` environment so the Azure OIDC subject claim is
+    # `repo:<owner>/<repo>:environment:release` — matched by the
+    # Trusted Signing app registration's Environment-scoped federated credential.
+    environment: release
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install MAUI workload (macOS)
+        if: runner.os == 'macOS'
+        run: dotnet workload install maui --version 10.0.107
+
+      - name: Install MAUI workload (Windows)
+        if: runner.os == 'Windows'
+        run: dotnet workload install maui-windows --version 10.0.107
+
+      - name: Extract version from tag
+        id: version
+        shell: bash
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+        run: |
+          VERSION="${TAG_NAME#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Stamp version in project file
+        shell: bash
+        env:
+          APP_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          sed -i.bak "s|<ApplicationDisplayVersion>.*</ApplicationDisplayVersion>|<ApplicationDisplayVersion>$APP_VERSION</ApplicationDisplayVersion>|" ${{ env.APP_PROJECT }}
+          rm -f "${{ env.APP_PROJECT }}.bak"
+
+      # .NET 10 MAUI bindings reference MacCatalyst 26 APIs; Xcode 26+ is required.
+      - name: Select Xcode
+        if: runner.os == 'macOS'
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: 'latest-stable'
+
+      # --- macOS code signing setup ---
+      - name: Import Apple certificate
+        if: runner.os == 'macOS'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          CERT_PATH=$RUNNER_TEMP/certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PASSWORD=$(uuidgen)
+          echo -n "$APPLE_CERTIFICATE" | base64 --decode -o $CERT_PATH
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security import $CERT_PATH -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security list-keychains -d user -s $KEYCHAIN_PATH login.keychain-db
+
+      # --- Build ---
+      - name: Publish app (macOS)
+        if: runner.os == 'macOS'
+        run: >
+          dotnet publish ${{ env.APP_PROJECT }}
+          -f ${{ matrix.framework }}
+          -r ${{ matrix.rid }}
+          -c Release
+          --self-contained true
+          /p:ValidateXcodeVersion=false
+          /p:CreatePackage=false
+
+      - name: Publish app (Windows)
+        if: runner.os == 'Windows'
+        run: >
+          dotnet publish ${{ env.APP_PROJECT }}
+          -f ${{ matrix.framework }}
+          -r ${{ matrix.rid }}
+          -c Release
+          --self-contained true
+          /p:ValidateXcodeVersion=false
+          -o publish
+
+      # Azure OIDC login — mints a federated token from GitHub's OIDC provider and
+      # exports the Azure SDK env vars so DefaultAzureCredential (used by the
+      # Trusted Signing action) can authenticate without a client secret.
+      - name: Azure OIDC login
+        if: runner.os == 'Windows'
+        uses: azure/login@v2
+        with:
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          allow-no-subscriptions: true
+
+      # --- Windows code signing: published binaries (pre-Velopack) ---
+      # Signs the app exe + first-party DLLs so the .nupkg Velopack creates
+      # contains trusted binaries that won't trip SmartScreen on first run.
+      - name: Sign published binaries (Azure Trusted Signing)
+        if: runner.os == 'Windows'
+        uses: azure/trusted-signing-action@v0.5.1
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          endpoint: ${{ secrets.AZURE_TRUSTED_SIGNING_ENDPOINT }}
+          trusted-signing-account-name: ${{ secrets.AZURE_TRUSTED_SIGNING_ACCOUNT }}
+          certificate-profile-name: ${{ secrets.AZURE_TRUSTED_SIGNING_PROFILE }}
+          files-folder: ${{ github.workspace }}\publish
+          # Restrict to first-party binaries — re-signing Microsoft's CLR/MAUI DLLs
+          # is wasteful and can confuse some AV heuristics.
+          files-folder-filter: exe
+          files-folder-recurse: false
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+
+      - name: Stage first-party DLLs for signing
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          # Stage first-party DLLs in a separate folder so we can use the
+          # signing action's folder filter without sweeping in Microsoft DLLs.
+          $stage = "$env:RUNNER_TEMP\sign-dlls"
+          New-Item -ItemType Directory -Force -Path $stage | Out-Null
+          Get-ChildItem -Path publish -Filter 'SelfCertForge*.dll' -File |
+            ForEach-Object { Copy-Item $_.FullName $stage -Force }
+          "STAGE_DIR=$stage" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Sign first-party DLLs — invoke Trusted Signing
+        if: runner.os == 'Windows'
+        uses: azure/trusted-signing-action@v0.5.1
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          endpoint: ${{ secrets.AZURE_TRUSTED_SIGNING_ENDPOINT }}
+          trusted-signing-account-name: ${{ secrets.AZURE_TRUSTED_SIGNING_ACCOUNT }}
+          certificate-profile-name: ${{ secrets.AZURE_TRUSTED_SIGNING_PROFILE }}
+          files-folder: ${{ env.STAGE_DIR }}
+          files-folder-filter: dll
+          files-folder-recurse: false
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+
+      - name: Copy signed first-party DLLs back into publish/
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Get-ChildItem -Path $env:STAGE_DIR -Filter '*.dll' -File |
+            ForEach-Object { Copy-Item $_.FullName "publish\$($_.Name)" -Force }
+          Remove-Item -Recurse -Force $env:STAGE_DIR
+
+      # --- Velopack packaging ---
+      - name: Install Velopack CLI
+        run: dotnet tool install -g vpk
+
+      - name: Download previous release (for deltas)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          vpk download github \
+            --repoUrl "$REPO_URL" \
+            --channel ${{ matrix.channel }} \
+            --token "$GH_TOKEN" \
+            || echo "No previous release found — first release for this channel"
+
+      - name: Create Velopack package (macOS)
+        if: runner.os == 'macOS'
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+          APP_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          KEY_PATH=$RUNNER_TEMP/AuthKey.p8
+          echo "$APP_STORE_CONNECT_KEY" > "$KEY_PATH"
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          APPLE_SIGNING_IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | grep "Developer ID Application" | head -n1 | awk -F'"' '{print $2}')
+          APPLE_INSTALLER_IDENTITY=$(security find-identity -v "$KEYCHAIN_PATH" | grep "Developer ID Installer" | head -n1 | awk -F'"' '{print $2}')
+          echo "Using app signing identity: $APPLE_SIGNING_IDENTITY"
+          echo "Using installer signing identity: $APPLE_INSTALLER_IDENTITY"
+          if [ -z "$APPLE_SIGNING_IDENTITY" ]; then
+            echo "ERROR: No 'Developer ID Application' identity found in keychain"
+            exit 1
+          fi
+          if [ -z "$APPLE_INSTALLER_IDENTITY" ]; then
+            echo "ERROR: No 'Developer ID Installer' identity found in keychain"
+            exit 1
+          fi
+          # Pre-create a notarytool keychain profile so vpk's --notaryProfile can reference it.
+          NOTARY_PROFILE_NAME=selfcertforge-notary
+          xcrun notarytool store-credentials "$NOTARY_PROFILE_NAME" \
+            --key "$KEY_PATH" \
+            --key-id "$APP_STORE_CONNECT_KEY_ID" \
+            --issuer "$APP_STORE_CONNECT_ISSUER_ID" \
+            --keychain "$KEYCHAIN_PATH"
+          vpk pack \
+            -u "$APP_NAME" \
+            -v "$APP_VERSION" \
+            -p "SelfCertForge.App/bin/Release/${{ matrix.framework }}/${{ matrix.rid }}/SelfCertForge.app" \
+            -c ${{ matrix.channel }} \
+            --mainExe SelfCertForge \
+            --packTitle "$APP_NAME" \
+            --bundleId "$APPLE_BUNDLE_ID" \
+            --noPortable \
+            --signAppIdentity "$APPLE_SIGNING_IDENTITY" \
+            --signInstallIdentity "$APPLE_INSTALLER_IDENTITY" \
+            --keychain "$KEYCHAIN_PATH" \
+            --notaryProfile "$NOTARY_PROFILE_NAME"
+          rm "$KEY_PATH"
+
+      - name: Create Velopack package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          APP_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          vpk pack `
+            -u $env:APP_NAME `
+            -v $env:APP_VERSION `
+            -p publish `
+            -c ${{ matrix.channel }} `
+            --mainExe SelfCertForge.exe `
+            --packTitle $env:APP_NAME `
+            --noPortable
+
+      # Sign the Velopack-produced Setup.exe (and any other PE files Velopack emits).
+      # Must happen AFTER vpk pack — Velopack rewrites the stub installer with embedded
+      # resources, which invalidates any prior signature on it.
+      - name: Sign Velopack installer (Azure Trusted Signing)
+        if: runner.os == 'Windows'
+        uses: azure/trusted-signing-action@v0.5.1
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          endpoint: ${{ secrets.AZURE_TRUSTED_SIGNING_ENDPOINT }}
+          trusted-signing-account-name: ${{ secrets.AZURE_TRUSTED_SIGNING_ACCOUNT }}
+          certificate-profile-name: ${{ secrets.AZURE_TRUSTED_SIGNING_PROFILE }}
+          files-folder: ${{ github.workspace }}\Releases
+          files-folder-filter: exe
+          files-folder-recurse: false
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+
+      - name: Upload Velopack artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: velopack-${{ matrix.channel }}
+          path: Releases/
+
+      # --- Cleanup ---
+      - name: Cleanup macOS keychain
+        if: runner.os == 'macOS' && always()
+        run: security delete-keychain $RUNNER_TEMP/app-signing.keychain-db
+
+  upload:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install Velopack CLI
+        run: dotnet tool install -g vpk
+
+      - name: Extract version from tag
+        id: version
+        shell: bash
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+        run: |
+          VERSION="${TAG_NAME#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: Releases/
+          merge-multiple: true
+
+      - name: Upload to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ github.event.release.tag_name }}
+          APP_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          for channel in osx-arm64 win-x64 win-arm64; do
+            vpk upload github \
+              --repoUrl "$REPO_URL" \
+              --tag "$TAG_NAME" \
+              --releaseName "SelfCertForge $APP_VERSION" \
+              --channel "$channel" \
+              --token "$GH_TOKEN" \
+              --merge
+          done

@@ -1,0 +1,25 @@
+namespace SelfCertForge.Core.Models;
+
+public sealed record ForgeRequest(
+    ForgeMode Mode,
+    string CommonName,
+    int ValidityDays,
+    int KeyBits,
+    string? IssuerId,
+    IReadOnlyList<string> Sans,
+    bool InstallInTrustStore,
+    string? EmailAddress = null,
+    string? Organization = null,
+    string? OrganizationalUnit = null,
+    string? Locality = null,
+    string? StateOrProvince = null,
+    string? Country = null,
+    bool KeyUsageDigitalSignature = true,
+    bool KeyUsageKeyEncipherment = true,
+    bool KeyUsageNonRepudiation = false,
+    bool KeyUsageDataEncipherment = false,
+    bool KeyUsageKeyAgreement = false,
+    bool KeyUsageEncipherOnly = false,
+    bool KeyUsageDecipherOnly = false,
+    bool EkuServerAuth = false,
+    bool EkuClientAuth = false);

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Forge Accents</title>
+<link rel="stylesheet" href="../colors_and_type.css"/>
+<style>
+  body { margin:0; padding:20px; background: var(--bg-forge); }
+  .grid { display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; }
+  .swatch { border-radius: 12px; padding: 14px; height: 88px; display:flex; flex-direction:column; justify-content:space-between; box-sizing:border-box; color: #0B0C10; }
+  .name { font-size: 12px; font-weight:700; }
+  .hex  { font-family: var(--font-mono); font-size: 11px; opacity:.7; }
+  .role { font-size: 10px; letter-spacing:.08em; text-transform:uppercase; opacity:.65; font-weight:600; }
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div class="swatch" style="background:#FF6A00">
+      <span class="role">Primary action</span>
+      <div><div class="name">Forge Orange</div><div class="hex">#FF6A00</div></div>
+    </div>
+    <div class="swatch" style="background:#FFB800">
+      <span class="role">Highlight · Sparks</span>
+      <div><div class="name">Molten Yellow</div><div class="hex">#FFB800</div></div>
+    </div>
+    <div class="swatch" style="background:#C0392B; color:#F2F3F6">
+      <span class="role" style="opacity:.75">Heat · Danger accent</span>
+      <div><div class="name">Ember Red</div><div class="hex">#C0392B</div></div>
+    </div>
+    <div class="swatch" style="background:#FFE07A">
+      <span class="role">Glow center</span>
+      <div><div class="name">Hot Core</div><div class="hex">#FFE07A</div></div>
+    </div>
+  </div>
+</body>
+</html>

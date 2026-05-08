@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Status pills</title>
+<link rel="stylesheet" href="../colors_and_type.css"/>
+<style>
+  body { margin:0; padding:22px; background: var(--bg-forge); display:flex; flex-direction:column; gap: 14px; }
+  .row { display:flex; gap: 10px; flex-wrap:wrap; }
+  .pill { display:inline-flex; align-items:center; gap: 6px; padding: 4px 10px 4px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; line-height: 1; border: 1px solid transparent; }
+  .pill .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .pill.trusted { color:#38C172; background: rgba(56,193,114,0.1); border-color: rgba(56,193,114,0.25); }
+  .pill.trusted .dot { background:#38C172; box-shadow: 0 0 6px rgba(56,193,114,0.7); }
+  .pill.self    { color:#FF6A00; background: rgba(255,106,0,0.10); border-color: rgba(255,106,0,0.30); }
+  .pill.self .dot { background:#FF6A00; }
+  .pill.expired { color:#E5484D; background: rgba(229,72,77,0.10); border-color: rgba(229,72,77,0.28); }
+  .pill.expired .dot { background:#E5484D; }
+  .pill.untrusted { color:#7C818E; background: rgba(124,129,142,0.10); border-color: rgba(124,129,142,0.30); }
+  .pill.untrusted .dot { background:#7C818E; }
+  .pill.warn   { color:#FFB800; background: rgba(255,184,0,0.10); border-color: rgba(255,184,0,0.28); }
+  .pill.warn .dot { background:#FFB800; }
+  .label { font-family: var(--font-mono); font-size: 10px; color: var(--fg3); width: 80px; }
+</style>
+</head>
+<body>
+  <div class="row">
+    <span class="pill trusted"><span class="dot"></span>Trusted root</span>
+    <span class="pill self"><span class="dot"></span>Self-signed</span>
+    <span class="pill expired"><span class="dot"></span>Expired</span>
+    <span class="pill untrusted"><span class="dot"></span>Untrusted</span>
+    <span class="pill warn"><span class="dot"></span>Expires in 7 days</span>
+  </div>
+</body>
+</html>

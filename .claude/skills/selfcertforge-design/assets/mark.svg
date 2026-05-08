@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none">
+  <defs>
+    <linearGradient id="forge2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FFB800"></stop>
+      <stop offset="55%" stop-color="#FF6A00"></stop>
+      <stop offset="100%" stop-color="#C0392B"></stop>
+    </linearGradient>
+    <radialGradient id="core" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#FFE07A"></stop>
+      <stop offset="55%" stop-color="#FF6A00"></stop>
+      <stop offset="100%" stop-color="#C0392B"></stop>
+    </radialGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="#12141A" stroke="#2F333D" stroke-width="1.5"></rect>
+  
+  <path d="M16 38 H48 V43 H44 L42 49 H22 L20 43 H16 Z" fill="#B7BBC6"></path>
+  <rect x="26" y="43" width="12" height="8" fill="#7C818E"></rect>
+  
+  <path d="M32 10 L34.5 18 L42 20 L34.5 22 L32 30 L29.5 22 L22 20 L29.5 18 Z" fill="url(#core)"></path>
+  
+  <circle cx="32" cy="20" r="13" fill="none" stroke="url(#forge2)" stroke-opacity="0.25" stroke-width="2"></circle>
+</svg>

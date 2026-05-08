@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Radii</title>
+<link rel="stylesheet" href="../colors_and_type.css"/>
+<style>
+  body { margin:0; padding:20px; background: var(--bg-forge); }
+  .row { display:grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+  .swatch { background: var(--bg-panel); border:1px solid var(--border-subtle); height: 90px; padding: 10px; display:flex; flex-direction:column; justify-content:space-between; box-sizing:border-box; }
+  .name { font-family: var(--font-mono); font-size: 10px; color: var(--fg3); }
+  .val { font-size: 11px; color: var(--fg1); font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="swatch" style="border-radius:6px">  <div class="val">6</div>  <div class="name">--radius-sm</div></div>
+    <div class="swatch" style="border-radius:10px"> <div class="val">10</div> <div class="name">--radius-md</div></div>
+    <div class="swatch" style="border-radius:12px"> <div class="val">12 · button</div><div class="name">--radius-lg</div></div>
+    <div class="swatch" style="border-radius:16px"> <div class="val">16 · card</div>  <div class="name">--radius-xl</div></div>
+    <div class="swatch" style="border-radius:20px"> <div class="val">20 · modal</div> <div class="name">--radius-2xl</div></div>
+    <div class="swatch" style="border-radius:999px"><div class="val">pill</div>      <div class="name">--radius-pill</div></div>
+  </div>
+</body>
+</html>

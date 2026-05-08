@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:SelfCertForge.App.Controls"
+             x:Class="SelfCertForge.App.App"
+             UserAppTheme="Dark">
+    <Application.Resources>
+        <ResourceDictionary>
+            <controls:InverseBoolConverter x:Key="InverseBool" />
+            <controls:NotNullToBoolConverter x:Key="NotNullToBool" />
+            <Color x:Key="ColorBackground">#0B0C10</Color>
+            <Color x:Key="ColorSurface">#12141A</Color>
+            <Color x:Key="ColorPanel">#1B1D25</Color>
+            <Color x:Key="ColorPanelElevated">#232631</Color>
+            <Color x:Key="ColorTextPrimary">#F2F3F6</Color>
+            <Color x:Key="ColorTextSecondary">#B7BBC6</Color>
+            <Color x:Key="ColorTextMuted">#7C818E</Color>
+            <Color x:Key="ColorAccentPrimary">#D5630C</Color>
+            <Color x:Key="ColorAccentPrimaryHover">#FF7F1A</Color>
+            <Color x:Key="ColorAccentPrimaryPressed">#D94F00</Color>
+            <Color x:Key="ColorAccentPrimaryDeep">#8C3000</Color>
+            <Color x:Key="ColorAccentSecondary">#FFB800</Color>
+            <Color x:Key="ColorAccentDanger">#C0392B</Color>
+            <Color x:Key="ColorBorderSubtle">#2F333D</Color>
+            <Color x:Key="ColorBorderStrong">#4A4F5C</Color>
+            <Color x:Key="ColorSuccess">#38C172</Color>
+            <Color x:Key="ColorWarning">#FFB800</Color>
+            <Color x:Key="ColorDanger">#E5484D</Color>
+            <Color x:Key="ColorInfo">#6EA8FE</Color>
+
+            <Color x:Key="Transparent">#00000000</Color>
+
+            <!-- Card style — bordered panel surface. Matches design-system spec:
+                 ColorPanel bg, 1px ColorBorderSubtle stroke, 16px radius, 20px padding. -->
+            <Style x:Key="CardStyle" TargetType="Border">
+                <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                <Setter Property="Stroke" Value="{StaticResource ColorBorderSubtle}" />
+                <Setter Property="StrokeThickness" Value="1" />
+                <Setter Property="StrokeShape" Value="RoundRectangle 16" />
+                <Setter Property="Padding" Value="20" />
+            </Style>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

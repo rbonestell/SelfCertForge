@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Text colors</title>
+<link rel="stylesheet" href="../colors_and_type.css"/>
+<style>
+  body { margin:0; padding:20px; background: var(--bg-forge); }
+  .stack { display:flex; flex-direction:column; gap:10px; }
+  .row { display:flex; align-items:center; justify-content:space-between; padding: 10px 14px; background: var(--bg-panel); border:1px solid var(--border-subtle); border-radius: 10px; }
+  .row .sample { font-size: 16px; font-weight: 500; }
+  .row .meta { display:flex; gap:14px; align-items:center; font-family: var(--font-mono); font-size: 11px; color: var(--fg3); }
+  .role { font-size: 10px; text-transform:uppercase; letter-spacing:.08em; color: var(--fg3); width: 90px; }
+</style>
+</head>
+<body>
+  <div class="stack">
+    <div class="row">
+      <span class="role">Primary</span>
+      <span class="sample" style="color:#F2F3F6">Forge Certificate</span>
+      <span class="meta">#F2F3F6</span>
+    </div>
+    <div class="row">
+      <span class="role">Secondary</span>
+      <span class="sample" style="color:#B7BBC6">Issued by Local Root CA</span>
+      <span class="meta">#B7BBC6</span>
+    </div>
+    <div class="row">
+      <span class="role">Muted</span>
+      <span class="sample" style="color:#7C818E">Expires in 30 days</span>
+      <span class="meta">#7C818E</span>
+    </div>
+    <div class="row">
+      <span class="role">Disabled</span>
+      <span class="sample" style="color:#555A66">Export PFX</span>
+      <span class="meta">#555A66</span>
+    </div>
+  </div>
+</body>
+</html>

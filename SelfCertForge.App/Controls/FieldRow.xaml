@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SelfCertForge.App.Controls.FieldRow"
+             x:Name="Root">
+    <Grid ColumnDefinitions="140,*" ColumnSpacing="16" RowSpacing="0">
+        <Label Grid.Column="0"
+               Text="{Binding Source={x:Reference Root}, Path=Label}"
+               FontFamily="InterRegular"
+               FontSize="14"
+               TextColor="{StaticResource ColorTextMuted}"
+               VerticalOptions="Start"
+               Margin="0,2,0,0" />
+        <Label Grid.Column="1"
+               Text="{Binding Source={x:Reference Root}, Path=Value}"
+               FontFamily="{Binding Source={x:Reference Root}, Path=ResolvedFontFamily}"
+               FontSize="14"
+               TextColor="{StaticResource ColorTextPrimary}"
+               LineBreakMode="WordWrap" />
+    </Grid>
+</ContentView>

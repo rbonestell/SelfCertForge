@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Elevation</title>
+<link rel="stylesheet" href="../colors_and_type.css"/>
+<style>
+  body { margin:0; padding:24px; background: var(--bg-forge); }
+  .grid { display:grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .card { background: var(--bg-panel); border:1px solid var(--border-subtle); border-radius: 12px; padding: 14px; height: 96px; display:flex; flex-direction:column; justify-content:space-between; }
+  .name { font-size: 12px; color: var(--fg1); font-weight: 600; }
+  .desc { font-family: var(--font-mono); font-size: 10px; color: var(--fg3); }
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div class="card">
+      <div class="name">Resting</div>
+      <div class="desc">no shadow · border only</div>
+    </div>
+    <div class="card" style="box-shadow: var(--shadow-1)">
+      <div class="name">Shadow 1</div>
+      <div class="desc">popovers</div>
+    </div>
+    <div class="card" style="box-shadow: var(--shadow-2); background: var(--bg-elevated)">
+      <div class="name">Shadow 2</div>
+      <div class="desc">menus · dropdowns</div>
+    </div>
+    <div class="card" style="box-shadow: var(--shadow-3); background: var(--bg-elevated)">
+      <div class="name">Shadow 3</div>
+      <div class="desc">modals · dialogs</div>
+    </div>
+    <div class="card" style="box-shadow: var(--glow-orange); border-color: rgba(255,106,0,.5)">
+      <div class="name">Forge glow</div>
+      <div class="desc">moment of forging only</div>
+    </div>
+    <div class="card" style="box-shadow: var(--glow-ember); border-color: rgba(192,57,43,.45)">
+      <div class="name">Ember glow</div>
+      <div class="desc">danger / heat accent</div>
+    </div>
+    <div class="card" style="border:2px solid #FF6A00; box-shadow: 0 0 0 4px rgba(255,106,0,0.15)">
+      <div class="name">Focus ring</div>
+      <div class="desc">keyboard focus state</div>
+    </div>
+    <div class="card" style="border-color: var(--border-strong)">
+      <div class="name">Strong border</div>
+      <div class="desc">active inputs</div>
+    </div>
+  </div>
+</body>
+</html>

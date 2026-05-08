@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SelfCertForge.App.Controls.StatusPill"
+             x:Name="Root">
+    <Border BackgroundColor="{Binding Source={x:Reference Root}, Path=BgColor}"
+            Stroke="{Binding Source={x:Reference Root}, Path=BorderColor}"
+            StrokeThickness="1"
+            StrokeShape="RoundRectangle 999"
+            Padding="9,3"
+            HorizontalOptions="Start"
+            VerticalOptions="Center">
+        <Grid ColumnDefinitions="6,Auto" ColumnSpacing="7" VerticalOptions="Center">
+            <Ellipse Grid.Column="0"
+                     WidthRequest="6"
+                     HeightRequest="6"
+                     Fill="{Binding Source={x:Reference Root}, Path=DotColor}"
+                     VerticalOptions="Center" />
+            <Label Grid.Column="1"
+                   Text="{Binding Source={x:Reference Root}, Path=Label}"
+                   FontFamily="InterSemiBold"
+                   FontSize="12"
+                   TextColor="{Binding Source={x:Reference Root}, Path=TextColor}"
+                   VerticalOptions="Center" />
+        </Grid>
+    </Border>
+</ContentView>

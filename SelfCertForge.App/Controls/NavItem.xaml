@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"
+             x:Class="SelfCertForge.App.Controls.NavItem"
+             x:Name="Root">
+    <Grid ColumnDefinitions="3,Auto,Auto,*" ColumnSpacing="0">
+
+        <!-- Active-state left bar (2px wide, orange, full height) -->
+        <BoxView Grid.Column="0"
+                 Color="{StaticResource Transparent}"
+                 WidthRequest="2"
+                 HorizontalOptions="Start"
+                 VerticalOptions="Fill">
+            <BoxView.Triggers>
+                <DataTrigger TargetType="BoxView"
+                             Binding="{Binding Source={x:Reference Root}, Path=IsActive}"
+                             Value="True">
+                    <Setter Property="Color" Value="{StaticResource ColorAccentPrimary}" />
+                </DataTrigger>
+            </BoxView.Triggers>
+        </BoxView>
+
+        <Border Grid.Column="1" Grid.ColumnSpan="3"
+                StrokeThickness="0"
+                StrokeShape="RoundRectangle 8"
+                Padding="14,9"
+                Margin="6,0,0,0">
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding Source={x:Reference Root}, Path=Command}"
+                                      CommandParameter="{Binding Source={x:Reference Root}, Path=CommandParameter}" />
+            </Border.GestureRecognizers>
+            <Border.Triggers>
+                <DataTrigger TargetType="Border"
+                             Binding="{Binding Source={x:Reference Root}, Path=IsActive}"
+                             Value="True">
+                    <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                </DataTrigger>
+            </Border.Triggers>
+
+            <Grid ColumnDefinitions="18,Auto" ColumnSpacing="12" VerticalOptions="Center">
+                <!-- Icon with optional update-available badge dot -->
+                <Grid Grid.Column="0" WidthRequest="18" HeightRequest="18">
+                    <shapes:Path Data="{Binding Source={x:Reference Root}, Path=IconData}"
+                                 Stroke="{StaticResource ColorTextSecondary}"
+                                 StrokeThickness="1.7"
+                                 StrokeLineCap="Round"
+                                 StrokeLineJoin="Round"
+                                 Aspect="Uniform"
+                                 WidthRequest="18"
+                                 HeightRequest="18"
+                                 VerticalOptions="Center">
+                        <shapes:Path.Triggers>
+                            <DataTrigger TargetType="shapes:Path"
+                                         Binding="{Binding Source={x:Reference Root}, Path=IsActive}"
+                                         Value="True">
+                                <Setter Property="Stroke" Value="{StaticResource ColorAccentPrimary}" />
+                            </DataTrigger>
+                        </shapes:Path.Triggers>
+                    </shapes:Path>
+                    <shapes:Ellipse WidthRequest="7"
+                                    HeightRequest="7"
+                                    Fill="{StaticResource ColorAccentPrimary}"
+                                    HorizontalOptions="End"
+                                    VerticalOptions="Start"
+                                    TranslationX="2"
+                                    TranslationY="-2"
+                                    IsVisible="{Binding Source={x:Reference Root}, Path=ShowBadge}" />
+                </Grid>
+
+                <Label Grid.Column="1"
+                       Text="{Binding Source={x:Reference Root}, Path=Label}"
+                       FontFamily="InterRegular"
+                       FontSize="16"
+                       TextColor="{StaticResource ColorTextSecondary}"
+                       VerticalOptions="Center">
+                    <Label.Triggers>
+                        <DataTrigger TargetType="Label"
+                                     Binding="{Binding Source={x:Reference Root}, Path=IsActive}"
+                                     Value="True">
+                            <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
+                            <Setter Property="FontFamily" Value="InterSemiBold" />
+                        </DataTrigger>
+                    </Label.Triggers>
+                </Label>
+            </Grid>
+        </Border>
+    </Grid>
+</ContentView>

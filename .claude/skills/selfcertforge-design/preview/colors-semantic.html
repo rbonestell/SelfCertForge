@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Semantic + Borders</title>
+<link rel="stylesheet" href="../colors_and_type.css"/>
+<style>
+  body { margin:0; padding:20px; background: var(--bg-forge); }
+  .row { display:grid; grid-template-columns: repeat(6, 1fr); gap:10px; }
+  .chip { border-radius: 10px; height: 56px; padding: 8px 10px; display:flex; flex-direction:column; justify-content:space-between; box-sizing:border-box; }
+  .chip .label { font-size: 10px; letter-spacing:.08em; text-transform:uppercase; }
+  .chip .hex { font-family: var(--font-mono); font-size: 10px; opacity:.85; }
+  .border-row { margin-top: 14px; display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+  .border-card { background: var(--bg-panel); border-radius: 12px; padding: 12px 14px; display:flex; align-items:center; gap:12px; }
+  .border-bar { width: 4px; height: 32px; border-radius: 2px; }
+  .border-meta { display:flex; flex-direction:column; gap:2px; }
+  .border-meta b { color: var(--fg1); font-size: 12px; }
+  .border-meta span { font-family: var(--font-mono); font-size: 11px; color: var(--fg3); }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="chip" style="background:#38C172;color:#0B0C10"><span class="label">Success</span><span class="hex">#38C172</span></div>
+    <div class="chip" style="background:#FFB800;color:#0B0C10"><span class="label">Warning</span><span class="hex">#FFB800</span></div>
+    <div class="chip" style="background:#E5484D;color:#F2F3F6"><span class="label">Danger</span><span class="hex">#E5484D</span></div>
+    <div class="chip" style="background:#6EA8FE;color:#0B0C10"><span class="label">Info</span><span class="hex">#6EA8FE</span></div>
+    <div class="chip" style="background:#1B1D25;color:#F2F3F6;border:1px solid #2F333D"><span class="label" style="color:#7C818E">Trusted dot</span>
+      <div style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:#38C172"></span><span class="hex">trusted</span></div>
+    </div>
+    <div class="chip" style="background:#1B1D25;color:#F2F3F6;border:1px solid #2F333D"><span class="label" style="color:#7C818E">Untrusted dot</span>
+      <div style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:#7C818E"></span><span class="hex">untrusted</span></div>
+    </div>
+  </div>
+  <div class="border-row">
+    <div class="border-card">
+      <span class="border-bar" style="background:#2F333D"></span>
+      <div class="border-meta"><b>Subtle border</b><span>#2F333D · default 1px</span></div>
+    </div>
+    <div class="border-card">
+      <span class="border-bar" style="background:#4A4F5C"></span>
+      <div class="border-meta"><b>Strong border</b><span>#4A4F5C · focused / active</span></div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<maui:MauiWinUIApplication
+    x:Class="SelfCertForge.App.WinUI.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:maui="using:Microsoft.Maui"
+    xmlns:local="using:SelfCertForge.App.WinUI">
+
+    <maui:MauiWinUIApplication.Resources>
+        <!--
+            Override Windows' accent-blue focus and selection colors with the
+            SelfCertForge brand palette so they don't clash with the dark
+            Forge surface. Color values mirror the tokens in App.xaml:
+              ColorAccentPrimary = #D5630C
+              ColorPanel         = #1B1D25
+              ColorPanelElevated = #232631
+              ColorTextPrimary   = #F2F3F6
+        -->
+
+        <!-- Keyboard focus rectangle drawn around focused Controls. Keep it
+             visible (accessibility) but in the brand orange. -->
+        <SolidColorBrush x:Key="SystemControlFocusVisualPrimaryBrush" Color="#D5630C" />
+        <SolidColorBrush x:Key="SystemControlFocusVisualSecondaryBrush" Color="#0B0C10" />
+
+        <!-- ListView / GridView / CollectionView item states. -->
+        <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="#1B1D25" />
+        <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="#232631" />
+        <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPressed" Color="#1B1D25" />
+        <SolidColorBrush x:Key="ListViewItemForegroundSelected" Color="#F2F3F6" />
+
+        <!-- Same brushes for items rendered via the newer ListViewItem template. -->
+        <SolidColorBrush x:Key="SystemControlHighlightListAccentLowBrush" Color="#1B1D25" />
+        <SolidColorBrush x:Key="SystemControlHighlightListAccentMediumBrush" Color="#232631" />
+        <SolidColorBrush x:Key="SystemControlHighlightListAccentHighBrush" Color="#1B1D25" />
+
+        <!-- ListView / CollectionView selected-item left-edge selection indicator
+             (the thin accent-blue vertical bar). The app already draws its own
+             orange active-state bar in the row template, so this is duplicate
+             chrome. Setting all states to Transparent removes the WinUI bar. -->
+        <SolidColorBrush x:Key="ListViewItemSelectionIndicatorBrush" Color="Transparent" />
+        <SolidColorBrush x:Key="ListViewItemSelectionIndicatorPointerOverBrush" Color="Transparent" />
+        <SolidColorBrush x:Key="ListViewItemSelectionIndicatorPressedBrush" Color="Transparent" />
+        <SolidColorBrush x:Key="ListViewItemSelectionIndicatorDisabledBrush" Color="Transparent" />
+        <!-- Same indicator on ItemsView (the newer template MAUI may pick). -->
+        <SolidColorBrush x:Key="ItemContainerSelectionIndicatorBrush" Color="Transparent" />
+        <SolidColorBrush x:Key="ItemContainerSelectionIndicatorPointerOverBrush" Color="Transparent" />
+        <SolidColorBrush x:Key="ItemContainerSelectionIndicatorPressedBrush" Color="Transparent" />
+        <SolidColorBrush x:Key="ItemContainerSelectionIndicatorDisabledBrush" Color="Transparent" />
+
+        <!-- TextBox / Entry focused-state underline and hover border —
+             suppressed entirely. Inputs are visually grouped by their parent
+             MAUI Border on the design surface, so the WinUI underline is
+             redundant and visually noisy. -->
+        <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="Transparent" />
+        <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="Transparent" />
+        <SolidColorBrush x:Key="ComboBoxBorderBrushFocused" Color="Transparent" />
+        <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="Transparent" />
+        <SolidColorBrush x:Key="DatePickerButtonBorderBrushFocused" Color="Transparent" />
+        <SolidColorBrush x:Key="TimePickerButtonBorderBrushFocused" Color="Transparent" />
+        <SolidColorBrush x:Key="AutoSuggestBoxBorderBrushFocused" Color="Transparent" />
+
+        <!-- Disable the keyboard focus rectangle on input controls only;
+             non-input controls keep the orange focus visual for keyboard
+             accessibility. -->
+        <Style TargetType="TextBox">
+            <Setter Property="UseSystemFocusVisuals" Value="False" />
+        </Style>
+        <Style TargetType="PasswordBox">
+            <Setter Property="UseSystemFocusVisuals" Value="False" />
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="UseSystemFocusVisuals" Value="False" />
+        </Style>
+        <Style TargetType="AutoSuggestBox">
+            <Setter Property="UseSystemFocusVisuals" Value="False" />
+        </Style>
+        <Style TargetType="DatePicker">
+            <Setter Property="UseSystemFocusVisuals" Value="False" />
+        </Style>
+        <Style TargetType="TimePicker">
+            <Setter Property="UseSystemFocusVisuals" Value="False" />
+        </Style>
+    </maui:MauiWinUIApplication.Resources>
+
+</maui:MauiWinUIApplication>

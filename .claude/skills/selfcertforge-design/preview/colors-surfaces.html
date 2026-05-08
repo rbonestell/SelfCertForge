@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Surfaces</title>
+<link rel="stylesheet" href="../colors_and_type.css"/>
+<style>
+  body { margin:0; padding:20px; }
+  .grid { display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; }
+  .swatch { border-radius: 12px; padding: 14px; height: 88px; display:flex; flex-direction:column; justify-content:space-between; box-sizing:border-box; }
+  .swatch.bordered { border: 1px solid var(--border-subtle); }
+  .name { font-size: 12px; font-weight:600; color: var(--fg1); }
+  .hex  { font-family: var(--font-mono); font-size: 11px; color: var(--fg3); }
+  .role { font-size: 10px; letter-spacing:.08em; text-transform:uppercase; color: var(--fg3); }
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div class="swatch bordered" style="background:#0B0C10">
+      <span class="role">Page</span>
+      <div><div class="name">Forge Black</div><div class="hex">#0B0C10</div></div>
+    </div>
+    <div class="swatch bordered" style="background:#12141A">
+      <span class="role">Shell · Nav</span>
+      <div><div class="name">Charcoal</div><div class="hex">#12141A</div></div>
+    </div>
+    <div class="swatch bordered" style="background:#1B1D25">
+      <span class="role">Card</span>
+      <div><div class="name">Panel</div><div class="hex">#1B1D25</div></div>
+    </div>
+    <div class="swatch bordered" style="background:#232631">
+      <span class="role">Modal · Menu</span>
+      <div><div class="name">Elevated</div><div class="hex">#232631</div></div>
+    </div>
+  </div>
+</body>
+</html>

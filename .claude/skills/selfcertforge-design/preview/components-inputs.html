@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Form inputs</title>
+<link rel="stylesheet" href="../colors_and_type.css"/>
+<style>
+  body { margin:0; padding:20px; background: var(--bg-forge); display:grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .field { display:flex; flex-direction:column; gap: 6px; }
+  label { font-size: 11px; font-weight: 500; color:#B7BBC6; }
+  input, select { font-family: var(--font-ui); font-size: 13px; background:#12141A; color:#F2F3F6; border:1px solid #2F333D; border-radius: 10px; padding: 9px 12px; outline: none; }
+  input.mono { font-family: var(--font-mono); }
+  input:focus { border-color:#FF6A00; box-shadow: 0 0 0 3px rgba(255,106,0,0.18); }
+  input.error { border-color:#E5484D; box-shadow: 0 0 0 3px rgba(229,72,77,0.15); }
+  .help { font-size: 11px; color:#7C818E; }
+  .err { font-size: 11px; color:#E5484D; }
+  .checkbox { display:flex; align-items:center; gap:10px; }
+  .check { width:16px; height:16px; border-radius:4px; background:#FF6A00; display:inline-flex; align-items:center; justify-content:center; }
+  .check svg { width: 12px; height: 12px; stroke:#0B0C10; stroke-width: 3; fill: none; }
+</style>
+</head>
+<body>
+  <div class="field">
+    <label>Common name (CN)</label>
+    <input class="mono" value="local.dev.forge"/>
+    <span class="help">Used as the certificate subject.</span>
+  </div>
+  <div class="field">
+    <label>Validity</label>
+    <select><option>365 days</option><option>90 days</option></select>
+  </div>
+  <div class="field">
+    <label>Subject alternative names</label>
+    <input class="mono" placeholder="dev.local, *.dev.local"/>
+  </div>
+  <div class="field">
+    <label>Organization</label>
+    <input class="error" value="!"/>
+    <span class="err">Organization is required.</span>
+  </div>
+  <div class="field" style="grid-column: 1 / -1;">
+    <div class="checkbox">
+      <span class="check"><svg viewBox="0 0 24 24"><polyline points="4 12 10 18 20 6"/></svg></span>
+      <span style="font-size:13px;color:#F2F3F6">Install in local trust store after forging</span>
+    </div>
+  </div>
+</body>
+</html>

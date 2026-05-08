@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:SelfCertForge.Core.Presentation;assembly=SelfCertForge.Core"
+             xmlns:controls="clr-namespace:SelfCertForge.App.Controls"
+             x:Class="SelfCertForge.App.Dialogs.CreateRootDialog"
+             x:DataType="vm:CreateRootDialogViewModel"
+             BackgroundColor="#B2000000">
+
+    <!-- Full-screen scrim tap to dismiss (blocked — CanBeDismissed=false equivalent) -->
+    <Grid>
+
+        <!-- Centered card -->
+        <Border BackgroundColor="{StaticResource ColorPanelElevated}"
+                Stroke="{StaticResource ColorBorderSubtle}"
+                StrokeThickness="1"
+                StrokeShape="RoundRectangle 12"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                WidthRequest="500">
+
+            <VerticalStackLayout Spacing="14" Padding="24">
+
+                <!-- Header -->
+                <VerticalStackLayout Spacing="4" Margin="0,0,0,4">
+                    <Label Text="Create root certificate"
+                           FontFamily="InterSemiBold"
+                           FontSize="22" TextColor="{StaticResource ColorTextPrimary}" />
+                    <Label Text="Generate a local root authority which to use to sign your development certificates."
+                           FontFamily="InterRegular"
+                           FontSize="15" TextColor="{StaticResource ColorTextMuted}" />
+                </VerticalStackLayout>
+
+                <!-- Common Name (required) -->
+                <VerticalStackLayout Spacing="5">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="Common Name (CN)"
+                               FontFamily="InterRegular" FontSize="15" TextColor="{StaticResource ColorTextSecondary}" />
+                        <Label Grid.Column="1" Text="required"
+                               FontFamily="InterRegular" FontSize="15" TextColor="{StaticResource ColorTextMuted}" />
+                    </Grid>
+                    <Border BackgroundColor="{StaticResource ColorSurface}"
+                            Stroke="{StaticResource ColorBorderSubtle}"
+                            StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                            Padding="12,0" HeightRequest="40">
+                        <Entry Text="{Binding CommonName, Mode=TwoWay}"
+                               Placeholder="root.local"
+                               IsEnabled="{Binding IsNotCreating}"
+                               FontFamily="JetBrainsMono" FontSize="16" TextColor="{StaticResource ColorTextPrimary}"
+                               PlaceholderColor="{StaticResource ColorTextMuted}"
+                               BackgroundColor="Transparent" />
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Email Address -->
+                <VerticalStackLayout Spacing="5">
+                    <Label Text="Email address"
+                           FontFamily="InterRegular" FontSize="15" TextColor="{StaticResource ColorTextSecondary}" />
+                    <Border BackgroundColor="{StaticResource ColorSurface}"
+                            Stroke="{StaticResource ColorBorderSubtle}"
+                            StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                            Padding="12,0" HeightRequest="40">
+                        <Entry Text="{Binding EmailAddress, Mode=TwoWay}"
+                               Placeholder="admin@example.com"
+                               Keyboard="Email"
+                               IsEnabled="{Binding IsNotCreating}"
+                               FontFamily="InterRegular" FontSize="16" TextColor="{StaticResource ColorTextPrimary}"
+                               PlaceholderColor="{StaticResource ColorTextMuted}"
+                               BackgroundColor="Transparent" />
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Organization / Organizational Unit row -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                    <VerticalStackLayout Grid.Column="0" Spacing="5">
+                        <Label Text="Organization"
+                               FontFamily="InterRegular" FontSize="15" TextColor="{StaticResource ColorTextSecondary}" />
+                        <Border BackgroundColor="{StaticResource ColorSurface}"
+                                Stroke="{StaticResource ColorBorderSubtle}"
+                                StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                                Padding="12,0" HeightRequest="40">
+                            <Entry Text="{Binding Organization, Mode=TwoWay}"
+                                   Placeholder="Acme Corp"
+                                   IsEnabled="{Binding IsNotCreating}"
+                                   FontFamily="InterRegular" FontSize="16" TextColor="{StaticResource ColorTextPrimary}"
+                                   PlaceholderColor="{StaticResource ColorTextMuted}"
+                                   BackgroundColor="Transparent" />
+                        </Border>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Column="1" Spacing="5">
+                        <Label Text="Organizational unit"
+                               FontFamily="InterRegular" FontSize="15" TextColor="{StaticResource ColorTextSecondary}" />
+                        <Border BackgroundColor="{StaticResource ColorSurface}"
+                                Stroke="{StaticResource ColorBorderSubtle}"
+                                StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                                Padding="12,0" HeightRequest="40">
+                            <Entry Text="{Binding OrganizationalUnit, Mode=TwoWay}"
+                                   Placeholder="Engineering"
+                                   IsEnabled="{Binding IsNotCreating}"
+                                   FontFamily="InterRegular" FontSize="16" TextColor="{StaticResource ColorTextPrimary}"
+                                   PlaceholderColor="{StaticResource ColorTextMuted}"
+                                   BackgroundColor="Transparent" />
+                        </Border>
+                    </VerticalStackLayout>
+                </Grid>
+
+                <!-- City / State / Country row -->
+                <Grid ColumnDefinitions="*,*,80" ColumnSpacing="12">
+                    <VerticalStackLayout Grid.Column="0" Spacing="5">
+                        <Label Text="City / Locality"
+                               FontFamily="InterRegular" FontSize="15" TextColor="{StaticResource ColorTextSecondary}" />
+                        <Border BackgroundColor="{StaticResource ColorSurface}"
+                                Stroke="{StaticResource ColorBorderSubtle}"
+                                StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                                Padding="12,0" HeightRequest="40">
+                            <Entry Text="{Binding Locality, Mode=TwoWay}"
+                                   Placeholder="San Francisco"
+                                   IsEnabled="{Binding IsNotCreating}"
+                                   FontFamily="InterRegular" FontSize="16" TextColor="{StaticResource ColorTextPrimary}"
+                                   PlaceholderColor="{StaticResource ColorTextMuted}"
+                                   BackgroundColor="Transparent" />
+                        </Border>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Column="1" Spacing="5">
+                        <Label Text="State or province"
+                               FontFamily="InterRegular" FontSize="15" TextColor="{StaticResource ColorTextSecondary}" />
+                        <Border BackgroundColor="{StaticResource ColorSurface}"
+                                Stroke="{StaticResource ColorBorderSubtle}"
+                                StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                                Padding="12,0" HeightRequest="40">
+                            <Entry Text="{Binding StateOrProvince, Mode=TwoWay}"
+                                   Placeholder="California"
+                                   IsEnabled="{Binding IsNotCreating}"
+                                   FontFamily="InterRegular" FontSize="16" TextColor="{StaticResource ColorTextPrimary}"
+                                   PlaceholderColor="{StaticResource ColorTextMuted}"
+                                   BackgroundColor="Transparent" />
+                        </Border>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Column="2" Spacing="5">
+                        <Label Text="Country"
+                               FontFamily="InterRegular" FontSize="15" TextColor="{StaticResource ColorTextSecondary}" />
+                        <Border BackgroundColor="{StaticResource ColorSurface}"
+                                Stroke="{StaticResource ColorBorderSubtle}"
+                                StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                                Padding="12,0" HeightRequest="40">
+                            <Entry Text="{Binding Country, Mode=TwoWay}"
+                                   Placeholder="US"
+                                   MaxLength="2"
+                                   IsEnabled="{Binding IsNotCreating}"
+                                   FontFamily="JetBrainsMono" FontSize="16" TextColor="{StaticResource ColorTextPrimary}"
+                                   PlaceholderColor="{StaticResource ColorTextMuted}"
+                                   BackgroundColor="Transparent" />
+                        </Border>
+                    </VerticalStackLayout>
+                </Grid>
+
+                <!-- Validity / Key size row -->
+                <Grid ColumnDefinitions="130,*" ColumnSpacing="12">
+                    <VerticalStackLayout Grid.Column="0" Spacing="5">
+                        <Label Text="Validity (days)"
+                               FontFamily="InterRegular" FontSize="15" TextColor="{StaticResource ColorTextSecondary}" />
+                        <Border BackgroundColor="{StaticResource ColorSurface}"
+                                Stroke="{StaticResource ColorBorderSubtle}"
+                                StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                                Padding="12,0" HeightRequest="40">
+                            <Entry Text="{Binding ValidityDays, Mode=TwoWay}"
+                                   Keyboard="Numeric"
+                                   IsEnabled="{Binding IsNotCreating}"
+                                   FontFamily="JetBrainsMono" FontSize="16" TextColor="{StaticResource ColorTextPrimary}"
+                                   BackgroundColor="Transparent" />
+                        </Border>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Column="1" Spacing="5">
+                        <Label Text="Key size (bits)"
+                               FontFamily="InterRegular" FontSize="15" TextColor="{StaticResource ColorTextSecondary}" />
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8" IsEnabled="{Binding IsNotCreating}">
+                            <Border Grid.Column="0" BackgroundColor="Transparent"
+                                    Stroke="{StaticResource ColorBorderSubtle}"
+                                    StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                                    HeightRequest="36">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding KeyBits}" Value="2048">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                                        <Setter Property="Stroke" Value="{StaticResource ColorAccentPrimary}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnKeyBits2048" />
+                                </Border.GestureRecognizers>
+                                <Label Text="2048" FontFamily="JetBrainsMono" FontSize="15"
+                                       TextColor="{StaticResource ColorTextMuted}"
+                                       HorizontalOptions="Center" VerticalOptions="Center">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding KeyBits}" Value="2048">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+                            <Border Grid.Column="1" BackgroundColor="Transparent"
+                                    Stroke="{StaticResource ColorBorderSubtle}"
+                                    StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                                    HeightRequest="36">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding KeyBits}" Value="3072">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                                        <Setter Property="Stroke" Value="{StaticResource ColorAccentPrimary}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnKeyBits3072" />
+                                </Border.GestureRecognizers>
+                                <Label Text="3072" FontFamily="JetBrainsMono" FontSize="15"
+                                       TextColor="{StaticResource ColorTextMuted}"
+                                       HorizontalOptions="Center" VerticalOptions="Center">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding KeyBits}" Value="3072">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+                            <Border Grid.Column="2" BackgroundColor="Transparent"
+                                    Stroke="{StaticResource ColorBorderSubtle}"
+                                    StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                                    HeightRequest="36">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding KeyBits}" Value="4096">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                                        <Setter Property="Stroke" Value="{StaticResource ColorAccentPrimary}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnKeyBits4096" />
+                                </Border.GestureRecognizers>
+                                <Label Text="4096" FontFamily="JetBrainsMono" FontSize="15"
+                                       TextColor="{StaticResource ColorTextMuted}"
+                                       HorizontalOptions="Center" VerticalOptions="Center">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding KeyBits}" Value="4096">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Grid>
+
+                <!-- Error -->
+                <Label Text="{Binding ErrorMessage}"
+                       FontFamily="InterRegular" FontSize="15"
+                       TextColor="{StaticResource ColorDanger}"
+                       IsVisible="{Binding HasError}" />
+
+                <!-- Actions -->
+                <HorizontalStackLayout HorizontalOptions="End" Spacing="10" Margin="0,4,0,0">
+                    <Button Text="Cancel"
+                            FontFamily="InterSemiBold" FontSize="15" TextColor="{StaticResource ColorTextSecondary}"
+                            BackgroundColor="Transparent"
+                            BorderColor="{StaticResource ColorBorderSubtle}"
+                            BorderWidth="1" CornerRadius="10"
+                            HeightRequest="42" Padding="14,0"
+                            IsEnabled="{Binding IsNotCreating}"
+                            Command="{Binding CancelCommand}" />
+                    <!-- CTA: shows text when idle, spinner when creating -->
+                    <Border BackgroundColor="{StaticResource ColorAccentPrimary}"
+                            Stroke="{StaticResource Transparent}"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 10"
+                            Padding="18,0"
+                            HeightRequest="42"
+                            IsVisible="{Binding IsNotCreating}">
+                        <Border.Behaviors>
+                            <controls:PrimaryButtonBehavior />
+                        </Border.Behaviors>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding CreateCommand}" />
+                        </Border.GestureRecognizers>
+                        <Label Text="Create"
+                               FontFamily="InterSemiBold"
+                               FontSize="15"
+                               TextColor="White"
+                               VerticalOptions="Center"
+                               HorizontalOptions="Center" />
+                    </Border>
+                    <Border BackgroundColor="{StaticResource ColorAccentPrimary}"
+                            StrokeThickness="0" StrokeShape="RoundRectangle 10"
+                            IsVisible="{Binding IsCreating}"
+                            HeightRequest="42" WidthRequest="220">
+                        <ActivityIndicator IsRunning="{Binding IsCreating}"
+                                           Color="White"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center" />
+                    </Border>
+                </HorizontalStackLayout>
+
+            </VerticalStackLayout>
+        </Border>
+
+    </Grid>
+</ContentPage>

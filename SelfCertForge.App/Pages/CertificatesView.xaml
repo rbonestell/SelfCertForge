@@ -1,0 +1,386 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:SelfCertForge.Core.Presentation;assembly=SelfCertForge.Core"
+             xmlns:controls="clr-namespace:SelfCertForge.App.Controls"
+             xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"
+             x:Class="SelfCertForge.App.Pages.CertificatesView"
+             x:DataType="vm:CertificatesViewModel">
+
+    <Grid RowDefinitions="Auto,1,*" BackgroundColor="Transparent">
+
+        <!-- Header -->
+        <HorizontalStackLayout Grid.Row="0" Spacing="16" Padding="32,28,32,20" VerticalOptions="Center">
+            <Grid WidthRequest="44" HeightRequest="44" VerticalOptions="Center">
+                <shapes:Path Data="{x:Static controls:IconPaths.FileBadge}"
+                             Stroke="{StaticResource ColorTextPrimary}"
+                             StrokeThickness="1.5"
+                             StrokeLineCap="Round"
+                             StrokeLineJoin="Round"
+                             Aspect="Uniform"
+                             WidthRequest="44"
+                             HeightRequest="44" />
+            </Grid>
+            <VerticalStackLayout Spacing="6" VerticalOptions="Center">
+                <Label Text="Signed Certificates"
+                       FontFamily="InterSemiBold"
+                       FontSize="32"
+                       TextColor="{StaticResource ColorTextPrimary}" />
+                <Label Text="Certificates issued by your local root authorities. Create new ones from the Authorities page."
+                       FontFamily="InterRegular"
+                       FontSize="16"
+                       TextColor="{StaticResource ColorTextMuted}" />
+            </VerticalStackLayout>
+        </HorizontalStackLayout>
+
+        <BoxView Grid.Row="1" Color="{StaticResource ColorBorderSubtle}" />
+
+        <!-- Master-detail -->
+        <Grid Grid.Row="2" ColumnDefinitions="380,1,*" BackgroundColor="Transparent">
+
+        <!-- ───── Left column: search + list ───── -->
+        <Grid Grid.Column="0" RowDefinitions="64,*" BackgroundColor="Transparent">
+
+            <!-- Search -->
+            <Border Grid.Row="0"
+                    BackgroundColor="{StaticResource ColorSurface}"
+                    Stroke="{StaticResource ColorBorderSubtle}"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 10"
+                    Margin="20,16,20,12"
+                    Padding="12,0"
+                    HeightRequest="36"
+                    VerticalOptions="Center">
+                <Entry Placeholder="Search certificates"
+                       Text="{Binding SearchText, Mode=TwoWay}"
+                       FontFamily="InterRegular"
+                       FontSize="16" TextColor="{StaticResource ColorTextPrimary}"
+                       PlaceholderColor="{StaticResource ColorTextMuted}"
+                       BackgroundColor="{StaticResource Transparent}"
+                       VerticalOptions="Center" />
+            </Border>
+
+            <!-- List / empty / no-match -->
+            <Grid Grid.Row="1">
+
+                <!-- Empty (no certificates yet) -->
+                <controls:EmptyState IconData="{x:Static controls:IconPaths.ScrollText}"
+                                     Title="No certificates yet"
+                                     Body="Forge a child certificate from one of your local root authorities to get started."
+                                     IsVisible="{Binding IsEmpty}" />
+
+                <!-- No-match (search returned nothing) -->
+                <VerticalStackLayout IsVisible="{Binding HasNoMatches}"
+                                     Spacing="6"
+                                     Padding="20"
+                                     HorizontalOptions="Center"
+                                     VerticalOptions="Center">
+                    <Label Text="No matches"
+                           FontFamily="InterSemiBold"
+                           FontSize="16"
+                           TextColor="{StaticResource ColorTextPrimary}"
+                           HorizontalOptions="Center" />
+                    <Label Text="{Binding SearchText, StringFormat='Nothing matched &quot;{0}&quot;.'}"
+                           FontFamily="InterRegular"
+                           FontSize="14"
+                           TextColor="{StaticResource ColorTextMuted}"
+                           HorizontalOptions="Center" />
+                </VerticalStackLayout>
+
+                <!-- Cert list -->
+                <CollectionView ItemsSource="{Binding Rows}"
+                                SelectionMode="Single"
+                                SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
+                                BackgroundColor="Transparent">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="vm:CertificateRowViewModel">
+                            <Grid ColumnDefinitions="3,*" Margin="0,0,0,1"
+                                  BackgroundColor="{StaticResource ColorBackground}">
+                                <Grid.Triggers>
+                                    <DataTrigger TargetType="Grid" Binding="{Binding IsSelected}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                                    </DataTrigger>
+                                </Grid.Triggers>
+
+                                <!-- Orange left accent — only visible when selected -->
+                                <BoxView Grid.Column="0"
+                                         Color="{StaticResource ColorAccentPrimary}"
+                                         IsVisible="{Binding IsSelected}" />
+
+                                <Border Grid.Column="1"
+                                        BackgroundColor="Transparent"
+                                        Stroke="{StaticResource Transparent}"
+                                        StrokeThickness="0"
+                                        Padding="20,14">
+                                    <Grid RowDefinitions="Auto,Auto" RowSpacing="6"
+                                          ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                        <Label Grid.Row="0" Grid.Column="0"
+                                               Text="{Binding CommonName}"
+                                               FontFamily="InterSemiBold"
+                                               FontSize="18"
+                                               TextColor="{StaticResource ColorTextPrimary}"
+                                               LineBreakMode="TailTruncation" />
+                                        <Label Grid.Row="1" Grid.Column="0"
+                                               Text="{Binding ExpirationLabel}"
+                                               FontFamily="JetBrainsMono"
+                                               FontSize="15" TextColor="{StaticResource ColorTextMuted}"
+                                               LineBreakMode="TailTruncation" />
+                                        <controls:StatusPill Grid.Row="0" Grid.RowSpan="2" Grid.Column="1"
+                                                             Kind="{Binding PillKind}"
+                                                             Label="{Binding PillLabel}"
+                                                             HorizontalOptions="End"
+                                                             VerticalOptions="Center" />
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </Grid>
+        </Grid>
+
+        <BoxView Grid.Column="1" Color="{StaticResource ColorBorderSubtle}" />
+
+        <!-- ───── Right column: detail ───── -->
+        <Grid Grid.Column="2" BackgroundColor="Transparent">
+
+            <!-- Scroll layer -->
+            <ScrollView BackgroundColor="Transparent">
+                <Grid>
+                    <!-- No selection state -->
+                    <controls:EmptyState IconData="{x:Static controls:IconPaths.ScrollText}"
+                                         Title="Select a certificate"
+                                         Body="Pick a certificate from the list to see its details."
+                                         IsVisible="{Binding HasSelection, Converter={StaticResource InverseBool}}" />
+
+                    <!-- Detail -->
+                    <VerticalStackLayout IsVisible="{Binding HasSelection}"
+                                         Padding="32,28"
+                                         Spacing="24">
+
+                        <!-- Header: info left, Export button right -->
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+
+                            <!-- Name / CN / pills from SelectedDetail -->
+                            <VerticalStackLayout Grid.Column="0"
+                                                 Spacing="10"
+                                                 BindingContext="{Binding SelectedDetail}"
+                                                 x:DataType="vm:CertificateDetailViewModel">
+                                <Label Text="{Binding CommonName}"
+                                       FontFamily="InterSemiBold"
+                                       FontSize="28"
+                                       TextColor="{StaticResource ColorTextPrimary}"
+                                       LineBreakMode="TailTruncation" />
+                                <HorizontalStackLayout Spacing="8">
+                                    <controls:StatusPill Kind="{Binding PillKind}"
+                                                         Label="{Binding PillLabel}" />
+                                    <controls:StatusPill Kind="{Binding TrustPillKind}"
+                                                         Label="{Binding TrustPillLabel}" />
+                                </HorizontalStackLayout>
+                            </VerticalStackLayout>
+
+                            <!-- Export button (binds to CertificatesViewModel) -->
+                            <Border Grid.Column="1"
+                                    BackgroundColor="{StaticResource ColorAccentPrimary}"
+                                    Stroke="{StaticResource Transparent}"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 10"
+                                    Padding="16,0"
+                                    HeightRequest="40"
+                                    VerticalOptions="Start">
+                                <Border.Behaviors>
+                                    <controls:PrimaryButtonBehavior />
+                                </Border.Behaviors>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding ToggleExportMenuCommand}" />
+                                </Border.GestureRecognizers>
+                                <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                                    <Label Text="Actions"
+                                           FontFamily="InterSemiBold"
+                                           FontSize="15"
+                                           TextColor="White"
+                                           VerticalOptions="Center" />
+                                    <Path Data="{x:Static controls:IconPaths.ChevronDown}"
+                                          Stroke="White"
+                                          StrokeThickness="2"
+                                          StrokeLineCap="Round"
+                                          StrokeLineJoin="Round"
+                                          Aspect="Uniform"
+                                          WidthRequest="14"
+                                          HeightRequest="14"
+                                          VerticalOptions="Center" />
+                                </HorizontalStackLayout>
+                            </Border>
+
+                        </Grid>
+
+                        <!-- Detail cards -->
+                        <VerticalStackLayout BindingContext="{Binding SelectedDetail}"
+                                             x:DataType="vm:CertificateDetailViewModel"
+                                             Spacing="24">
+
+                            <!-- Identity card -->
+                            <Border Style="{StaticResource CardStyle}">
+                                <VerticalStackLayout Spacing="12">
+                                    <Label Text="Identity"
+                                           FontFamily="InterSemiBold"
+                                           FontSize="16"
+                                           TextColor="{StaticResource ColorTextPrimary}" />
+                                    <controls:FieldRow Label="Subject" Value="{Binding Subject}" Mono="True" />
+                                    <controls:FieldRow Label="Issued by" Value="{Binding IssuerName}" />
+                                    <controls:FieldRow Label="SANs" Value="{Binding Sans}" Mono="True" />
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <!-- Cryptography card -->
+                            <Border Style="{StaticResource CardStyle}">
+                                <VerticalStackLayout Spacing="12">
+                                    <Label Text="Cryptography"
+                                           FontFamily="InterSemiBold"
+                                           FontSize="16"
+                                           TextColor="{StaticResource ColorTextPrimary}" />
+                                    <controls:FieldRow Label="Algorithm" Value="{Binding Algorithm}" />
+                                    <controls:FieldRow Label="Serial" Value="{Binding Serial}" Mono="True" />
+                                    <controls:FieldRow Label="SHA-256" Value="{Binding Sha256}" Mono="True" />
+                                    <controls:FieldRow Label="SHA-1" Value="{Binding Sha1}" Mono="True" />
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <!-- Key Usage card -->
+                            <Border Style="{StaticResource CardStyle}" IsVisible="{Binding HasKeyUsage}">
+                                <VerticalStackLayout Spacing="12">
+                                    <Label Text="Key Usage"
+                                           FontFamily="InterSemiBold"
+                                           FontSize="16"
+                                           TextColor="{StaticResource ColorTextPrimary}" />
+                                    <controls:FieldRow Label="Usage" Value="{Binding KeyUsages}" />
+                                    <controls:FieldRow Label="Extended" Value="{Binding ExtendedKeyUsages}" />
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <!-- Validity card -->
+                            <Border Style="{StaticResource CardStyle}">
+                                <VerticalStackLayout Spacing="12">
+                                    <Label Text="Validity"
+                                           FontFamily="InterSemiBold"
+                                           FontSize="16"
+                                           TextColor="{StaticResource ColorTextPrimary}" />
+                                    <controls:FieldRow Label="Issued" Value="{Binding IssuedAtLabel}" Mono="True" />
+                                    <controls:FieldRow Label="Expires" Value="{Binding ExpiresAtLabel}" Mono="True" />
+                                </VerticalStackLayout>
+                            </Border>
+
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Grid>
+            </ScrollView>
+
+            <!-- Export dropdown overlay (renders on top as last Grid child) -->
+            <Grid IsVisible="{Binding IsExportMenuOpen}" VerticalOptions="Fill" HorizontalOptions="Fill">
+
+                <!-- Backdrop — captures taps outside the dropdown to dismiss -->
+                <Grid BackgroundColor="#01000000">
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding CloseExportMenuCommand}" />
+                    </Grid.GestureRecognizers>
+                </Grid>
+
+                <!-- Dropdown card positioned just below the Actions button -->
+                <Border VerticalOptions="Start"
+                        HorizontalOptions="End"
+                        Margin="0,68,32,0"
+                        BackgroundColor="{StaticResource ColorAccentPrimaryDeep}"
+                        Stroke="{StaticResource Transparent}"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 10"
+                        Padding="0"
+                        MinimumWidthRequest="180">
+                    <VerticalStackLayout Spacing="0">
+
+                        <!-- Export .KEY/.PEM -->
+                        <Grid Padding="16,14">
+                            <Grid.Behaviors>
+                                <controls:MenuItemHoverBehavior />
+                            </Grid.Behaviors>
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ExportKeyPemCommand}" />
+                            </Grid.GestureRecognizers>
+                            <Label Text="Export as PEM"
+                                   FontFamily="InterSemiBold"
+                                   FontSize="15"
+                                   TextColor="White" />
+                        </Grid>
+
+                        <BoxView Color="#80FFFFFF" HeightRequest="1" />
+
+                        <!-- Export .PFX -->
+                        <Grid Padding="16,14">
+                            <Grid.Behaviors>
+                                <controls:MenuItemHoverBehavior />
+                            </Grid.Behaviors>
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ExportPfxCommand}" />
+                            </Grid.GestureRecognizers>
+                            <Label Text="Export as PFX"
+                                   FontFamily="InterSemiBold"
+                                   FontSize="15"
+                                   TextColor="White" />
+                        </Grid>
+
+                        <BoxView Color="#80FFFFFF" HeightRequest="1" />
+
+                        <!-- Export .DER -->
+                        <Grid Padding="16,14">
+                            <Grid.Behaviors>
+                                <controls:MenuItemHoverBehavior />
+                            </Grid.Behaviors>
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ExportDerCommand}" />
+                            </Grid.GestureRecognizers>
+                            <Label Text="Export as DER"
+                                   FontFamily="InterSemiBold"
+                                   FontSize="15"
+                                   TextColor="White" />
+                        </Grid>
+
+                        <BoxView Color="#80FFFFFF" HeightRequest="1" />
+
+                        <!-- Export .P7B -->
+                        <Grid Padding="16,14">
+                            <Grid.Behaviors>
+                                <controls:MenuItemHoverBehavior />
+                            </Grid.Behaviors>
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ExportP7bCommand}" />
+                            </Grid.GestureRecognizers>
+                            <Label Text="Export as P7B"
+                                   FontFamily="InterSemiBold"
+                                   FontSize="15"
+                                   TextColor="White" />
+                        </Grid>
+
+                        <BoxView Color="#80FFFFFF" HeightRequest="1" />
+
+                        <!-- Delete -->
+                        <Grid Padding="16,14">
+                            <Grid.Behaviors>
+                                <controls:MenuItemHoverBehavior />
+                            </Grid.Behaviors>
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding DeleteCommand}" />
+                            </Grid.GestureRecognizers>
+                            <Label Text="Delete"
+                                   FontFamily="InterSemiBold"
+                                   FontSize="15"
+                                   TextColor="White" />
+                        </Grid>
+
+                    </VerticalStackLayout>
+                </Border>
+
+            </Grid>
+
+        </Grid><!-- end right column -->
+        </Grid><!-- end master-detail -->
+    </Grid>
+</ContentView>

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Spacing</title>
+<link rel="stylesheet" href="../colors_and_type.css"/>
+<style>
+  body { margin:0; padding:20px; background: var(--bg-forge); }
+  .row { display:flex; align-items:flex-end; gap: 16px; height: 80px; }
+  .col { display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .bar { background: var(--forge-orange); border-radius: 4px; width: 28px; }
+  .name { font-family: var(--font-mono); font-size: 10px; color: var(--fg3); }
+  .val { font-size: 11px; color: var(--fg1); font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="col"><div class="bar" style="height:4px"></div><div class="val">4</div><div class="name">space-1</div></div>
+    <div class="col"><div class="bar" style="height:8px"></div><div class="val">8</div><div class="name">space-2</div></div>
+    <div class="col"><div class="bar" style="height:12px"></div><div class="val">12</div><div class="name">space-3</div></div>
+    <div class="col"><div class="bar" style="height:16px"></div><div class="val">16</div><div class="name">space-4</div></div>
+    <div class="col"><div class="bar" style="height:20px"></div><div class="val">20</div><div class="name">space-5</div></div>
+    <div class="col"><div class="bar" style="height:24px"></div><div class="val">24</div><div class="name">space-6</div></div>
+    <div class="col"><div class="bar" style="height:32px"></div><div class="val">32</div><div class="name">space-8</div></div>
+    <div class="col"><div class="bar" style="height:40px"></div><div class="val">40</div><div class="name">space-10</div></div>
+    <div class="col"><div class="bar" style="height:48px"></div><div class="val">48</div><div class="name">space-12</div></div>
+  </div>
+</body>
+</html>
