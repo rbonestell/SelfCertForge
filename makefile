@@ -35,4 +35,4 @@ run: kill build
 	dotnet run --project $(PROJECT) -f $(FRAMEWORK)
 
 test:
-	dotnet test
+	dotnet test SelfCertForge.Core.Tests/SelfCertForge.Core.Tests.csproj

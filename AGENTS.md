@@ -24,7 +24,7 @@ make build     # dotnet build the App for the current OS's TFM
 make rebuild   # clean + build
 make run       # kills running SelfCertForge first, then dotnet run
 make kill      # pkill -x SelfCertForge (or taskkill on Windows)
-make test      # dotnet test (runs every test project in the solution)
+make test      # dotnet test on SelfCertForge.Core.Tests (skips App so CI runners without MAUI workloads work)
 make clean     # dotnet clean + remove App bin/obj
 ```
 Direct invocation also works: `dotnet test SelfCertForge.Core.Tests/SelfCertForge.Core.Tests.csproj`. If Xcode gating blocks build: `-p:ValidateXcodeVersion=false` (already set in the App csproj). macCatalyst builds produce a fat bundle (`maccatalyst-x64;maccatalyst-arm64`); Windows ships **x64 only** (`win-x64`) — no ARM64 build — and uses unpackaged `WindowsAppSDKSelfContained` so Velopack installers run on machines without WinAppRuntime.

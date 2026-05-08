@@ -55,7 +55,7 @@ jobs:
         run: make build
 
   test:
-    name: Tests
+    name: Run Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
