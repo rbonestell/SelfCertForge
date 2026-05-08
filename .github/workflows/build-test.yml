@@ -1,0 +1,71 @@
+name: Build & Test
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  # Pin to the exact SDK from global.json so setup-dotnet doesn't pick up
+  # a different patch — keeps build behavior identical to the local makefile
+  # and the existing Release workflow.
+  DOTNET_VERSION: "10.0.203"
+  MAUI_WORKLOAD_VERSION: "10.0.107"
+
+jobs:
+  build-app:
+    name: Build App (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+          - os: windows-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install MAUI workload (macOS)
+        if: runner.os == 'macOS'
+        run: dotnet workload install maui --version ${{ env.MAUI_WORKLOAD_VERSION }}
+
+      - name: Install MAUI workload (Windows)
+        if: runner.os == 'Windows'
+        run: dotnet workload install maui-windows --version ${{ env.MAUI_WORKLOAD_VERSION }}
+
+      # .NET 10 MAUI bindings reference MacCatalyst 26 APIs; Xcode 26+ is required.
+      - name: Select Xcode
+        if: runner.os == 'macOS'
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: 'latest-stable'
+
+      - name: Build (make build)
+        # The makefile picks the right TFM based on the runner OS:
+        #   macOS   -> net10.0-maccatalyst
+        #   Windows -> net10.0-windows10.0.19041.0
+        run: make build
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Run tests (make test)
+        # Mirrors local dev — the makefile is the single source of truth for
+        # which test projects are run. New test projects get added there.
+        run: make test
