@@ -102,15 +102,19 @@ jobs:
       # --- Build ---
       - name: Publish app (macOS)
         if: runner.os == 'macOS'
-        # No -r flag: lets the csproj <RuntimeIdentifiers> drive a universal
-        # (maccatalyst-x64 + maccatalyst-arm64) lipo-merged .app bundle.
+        # No -r flag + CreatePackage=true triggers MAUI's macCatalyst universal
+        # build: it publishes both RIDs from <RuntimeIdentifiers>, lipo-merges
+        # the binaries, and emits a single fat .app bundle at
+        # bin/Release/<TFM>/osx-arm64/SelfCertForge.app (the path is named
+        # "osx-arm64" but contains both x64 and arm64 slices). MAUI also
+        # produces a .pkg here, but we ignore that — Velopack repackages.
         run: >
           dotnet publish ${{ env.APP_PROJECT }}
           -f ${{ matrix.framework }}
           -c Release
           --self-contained true
           /p:ValidateXcodeVersion=false
-          /p:CreatePackage=false
+          /p:CreatePackage=true
 
       - name: Publish app (Windows)
         if: runner.os == 'Windows'
@@ -239,7 +243,7 @@ jobs:
           vpk pack \
             -u "$APP_NAME" \
             -v "$APP_VERSION" \
-            -p "SelfCertForge.App/bin/Release/${{ matrix.framework }}/SelfCertForge.app" \
+            -p "SelfCertForge.App/bin/Release/${{ matrix.framework }}/osx-arm64/SelfCertForge.app" \
             -c ${{ matrix.channel }} \
             --mainExe SelfCertForge \
             --packTitle "$APP_NAME" \
