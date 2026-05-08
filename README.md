@@ -21,8 +21,7 @@ Download the appropriate installer for your operating system:
 
 <p align="center">
 	<a href="https://github.com/rbonestell/SelfCertForge/releases/latest/download/SelfCertForge-osx-Setup.pkg"><img src="assets/download-macos.png" alt="Download for macOS"></a>
-	<a href="https://github.com/rbonestell/SelfCertForge/releases/latest/download/SelfCertForge-win-x64-Setup.exe"><img src="assets/download-windows-x64.png" alt="Download for Windows x64"></a>
-	<a href="https://github.com/rbonestell/SelfCertForge/releases/latest/download/SelfCertForge-win-arm64-Setup.exe"><img src="assets/download-windows-arm.png" alt="Download for Windows ARM"></a>
+	<a href="https://github.com/rbonestell/SelfCertForge/releases/latest/download/SelfCertForge-win-x64-Setup.exe"><img src="assets/download-windows.png" alt="Download for Windows"></a>
 </p>
 
 ## Screenshots
