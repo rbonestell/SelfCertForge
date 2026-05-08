@@ -11,4 +11,6 @@ public sealed class RootCertificateRequest
     public int ValidForDays { get; set; } = 9125;
 
     public string SubjectDn { get; set; } = "/C=US/ST=Colorado/L=Durango/O=Bonestell/OU=Home/CN=homeRoot";
+
+    public HashAlgorithmKind HashAlgorithm { get; set; } = HashAlgorithmKind.Sha256;
 }

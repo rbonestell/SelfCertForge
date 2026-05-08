@@ -104,11 +104,18 @@ public sealed class DashboardViewModelTests
     {
         private readonly List<ActivityEntry> _items = new();
         public IReadOnlyList<ActivityEntry> Recent => _items.OrderByDescending(e => e.At).ToList();
+        public int MaxEntries { get; set; } = 500;
         public event EventHandler? Changed;
         public Task LoadAsync(CancellationToken ct = default) => Task.CompletedTask;
         public Task AppendAsync(ActivityEntry entry, CancellationToken ct = default)
         {
             _items.Add(entry);
+            Changed?.Invoke(this, EventArgs.Empty);
+            return Task.CompletedTask;
+        }
+        public Task ClearAsync(CancellationToken ct = default)
+        {
+            _items.Clear();
             Changed?.Invoke(this, EventArgs.Empty);
             return Task.CompletedTask;
         }

@@ -43,4 +43,6 @@ public sealed class SignedCertificateRequest
     public bool EkuServerAuth { get; set; } = false;
 
     public bool EkuClientAuth { get; set; } = false;
+
+    public HashAlgorithmKind HashAlgorithm { get; set; } = HashAlgorithmKind.Sha256;
 }

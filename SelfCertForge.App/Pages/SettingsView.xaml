@@ -2,39 +2,530 @@
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:SelfCertForge.App.Controls"
+             xmlns:pages="clr-namespace:SelfCertForge.App.Pages"
+             xmlns:vm="clr-namespace:SelfCertForge.Core.Presentation;assembly=SelfCertForge.Core"
              xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"
-             x:Class="SelfCertForge.App.Pages.SettingsView">
+             x:Class="SelfCertForge.App.Pages.SettingsView"
+             x:DataType="vm:SettingsViewModel">
 
-    <Grid RowDefinitions="Auto,1,*" BackgroundColor="Transparent">
+    <!-- Whole page scrolls together — header + sections inside a single
+         VerticalStackLayout (mirrors DashboardView). No divider between
+         heading and first section card. -->
+    <ScrollView BackgroundColor="Transparent">
+        <VerticalStackLayout Padding="32,28" Spacing="20">
 
-        <!-- Header -->
-        <HorizontalStackLayout Grid.Row="0" Spacing="16" Padding="32,28,32,20" VerticalOptions="Center">
-            <Grid WidthRequest="44" HeightRequest="44" VerticalOptions="Center">
-                <shapes:Path Data="{x:Static controls:IconPaths.Settings2}"
-                             Stroke="{StaticResource ColorTextPrimary}"
-                             StrokeThickness="1.5"
-                             StrokeLineCap="Round"
-                             StrokeLineJoin="Round"
-                             Aspect="Uniform"
-                             WidthRequest="44"
-                             HeightRequest="44" />
-            </Grid>
-            <VerticalStackLayout Spacing="6" VerticalOptions="Center">
-                <Label Text="Settings"
-                       FontFamily="InterSemiBold"
-                       FontSize="32"
-                       TextColor="{StaticResource ColorTextPrimary}" />
-                <Label Text="Application preferences and configuration."
-                       FontFamily="InterRegular"
-                       FontSize="16"
-                       TextColor="{StaticResource ColorTextMuted}" />
-            </VerticalStackLayout>
-        </HorizontalStackLayout>
+            <!-- Page header -->
+            <HorizontalStackLayout Spacing="16" VerticalOptions="Center">
+                <Grid WidthRequest="44" HeightRequest="44" VerticalOptions="Center">
+                    <shapes:Path Data="{x:Static controls:IconPaths.Settings2}"
+                                 Stroke="{StaticResource ColorTextPrimary}"
+                                 StrokeThickness="1.5"
+                                 StrokeLineCap="Round"
+                                 StrokeLineJoin="Round"
+                                 Aspect="Uniform"
+                                 WidthRequest="44"
+                                 HeightRequest="44" />
+                </Grid>
+                <VerticalStackLayout Spacing="6" VerticalOptions="Center">
+                    <Label Text="Settings"
+                           FontFamily="InterSemiBold"
+                           FontSize="32"
+                           TextColor="{StaticResource ColorTextPrimary}" />
+                    <Label Text="Application preferences and configuration."
+                           FontFamily="InterRegular"
+                           FontSize="16"
+                           TextColor="{StaticResource ColorTextMuted}" />
+                </VerticalStackLayout>
+            </HorizontalStackLayout>
 
-        <BoxView Grid.Row="1" Color="{StaticResource ColorBorderSubtle}" />
+                <!-- ==================== Certificate Defaults ==================== -->
+                <Border Style="{StaticResource CardStyle}" Padding="24">
+                    <VerticalStackLayout Spacing="18">
 
-        <controls:EmptyState Grid.Row="2" Title="Settings coming soon." />
+                        <!-- Card title row with per-card "Saved" indicator -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Grid.Column="0"
+                                   Text="Certificate Defaults"
+                                   FontFamily="InterSemiBold"
+                                   FontSize="19"
+                                   TextColor="{StaticResource ColorTextPrimary}" />
+                            <Label Grid.Column="1"
+                                   Text="Saved"
+                                   FontFamily="InterRegular"
+                                   FontSize="13"
+                                   TextColor="{StaticResource ColorSuccess}"
+                                   VerticalOptions="Center"
+                                   IsVisible="{Binding ShowSavedDefaults}" />
+                        </Grid>
+                        <Label Text="Pre-fill the Create Root and Create Signed dialogs."
+                               FontFamily="InterRegular"
+                               FontSize="15"
+                               TextColor="{StaticResource ColorTextMuted}" />
 
-    </Grid>
+                        <!-- Validity row. NumericEntryBehavior strips non-digits at type/paste
+                             time on both macOS and Windows. The DataTrigger flips the border to
+                             ColorDanger when value <= 0; an inline error label appears below. -->
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+                            <VerticalStackLayout Grid.Column="0" Spacing="6">
+                                <Label Text="Root validity (days)"
+                                       FontFamily="InterRegular" FontSize="15"
+                                       TextColor="{StaticResource ColorTextSecondary}" />
+                                <Border BackgroundColor="{StaticResource ColorSurface}"
+                                        Stroke="{StaticResource ColorBorderSubtle}"
+                                        StrokeThickness="1"
+                                        StrokeShape="RoundRectangle 8"
+                                        Padding="12,0" HeightRequest="40">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding RootValidityHasError}" Value="True">
+                                            <Setter Property="Stroke" Value="{StaticResource ColorDanger}" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Entry Text="{Binding RootValidityDays, Mode=TwoWay}"
+                                           Keyboard="Numeric"
+                                           FontFamily="JetBrainsMono"
+                                           FontSize="16"
+                                           TextColor="{StaticResource ColorTextPrimary}"
+                                           BackgroundColor="Transparent">
+                                        <Entry.Behaviors>
+                                            <controls:NumericEntryBehavior />
+                                        </Entry.Behaviors>
+                                    </Entry>
+                                </Border>
+                                <Label Text="Must be greater than 0."
+                                       FontFamily="InterRegular" FontSize="13"
+                                       TextColor="{StaticResource ColorDanger}"
+                                       IsVisible="{Binding RootValidityHasError}" />
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Grid.Column="1" Spacing="6">
+                                <Label Text="Signed validity (days)"
+                                       FontFamily="InterRegular" FontSize="15"
+                                       TextColor="{StaticResource ColorTextSecondary}" />
+                                <Border BackgroundColor="{StaticResource ColorSurface}"
+                                        Stroke="{StaticResource ColorBorderSubtle}"
+                                        StrokeThickness="1"
+                                        StrokeShape="RoundRectangle 8"
+                                        Padding="12,0" HeightRequest="40">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding SignedValidityHasError}" Value="True">
+                                            <Setter Property="Stroke" Value="{StaticResource ColorDanger}" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Entry Text="{Binding SignedValidityDays, Mode=TwoWay}"
+                                           Keyboard="Numeric"
+                                           FontFamily="JetBrainsMono"
+                                           FontSize="16"
+                                           TextColor="{StaticResource ColorTextPrimary}"
+                                           BackgroundColor="Transparent">
+                                        <Entry.Behaviors>
+                                            <controls:NumericEntryBehavior />
+                                        </Entry.Behaviors>
+                                    </Entry>
+                                </Border>
+                                <Label Text="Must be greater than 0."
+                                       FontFamily="InterRegular" FontSize="13"
+                                       TextColor="{StaticResource ColorDanger}"
+                                       IsVisible="{Binding SignedValidityHasError}" />
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <!-- Key size segmented -->
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Key size (bits)"
+                                   FontFamily="InterRegular" FontSize="15"
+                                   TextColor="{StaticResource ColorTextSecondary}" />
+                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                                <controls:SegmentedOption Grid.Column="0"
+                                                          Text="2048"
+                                                          UseMonoFont="True"
+                                                          IsSelected="{Binding IsKeyBits2048}"
+                                                          Tapped="OnKeyBits2048" />
+                                <controls:SegmentedOption Grid.Column="1"
+                                                          Text="3072"
+                                                          UseMonoFont="True"
+                                                          IsSelected="{Binding IsKeyBits3072}"
+                                                          Tapped="OnKeyBits3072" />
+                                <controls:SegmentedOption Grid.Column="2"
+                                                          Text="4096"
+                                                          UseMonoFont="True"
+                                                          IsSelected="{Binding IsKeyBits4096}"
+                                                          Tapped="OnKeyBits4096" />
+                            </Grid>
+                        </VerticalStackLayout>
+
+                        <!-- Hash algorithm segmented -->
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Hash algorithm"
+                                   FontFamily="InterRegular" FontSize="15"
+                                   TextColor="{StaticResource ColorTextSecondary}" />
+                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                                <controls:SegmentedOption Grid.Column="0"
+                                                          Text="SHA-256"
+                                                          UseMonoFont="True"
+                                                          IsSelected="{Binding IsHashSha256}"
+                                                          Tapped="OnHashSha256" />
+                                <controls:SegmentedOption Grid.Column="1"
+                                                          Text="SHA-384"
+                                                          UseMonoFont="True"
+                                                          IsSelected="{Binding IsHashSha384}"
+                                                          Tapped="OnHashSha384" />
+                                <controls:SegmentedOption Grid.Column="2"
+                                                          Text="SHA-512"
+                                                          UseMonoFont="True"
+                                                          IsSelected="{Binding IsHashSha512}"
+                                                          Tapped="OnHashSha512" />
+                            </Grid>
+                        </VerticalStackLayout>
+
+                        <!-- Sub-section: Default Subject DN -->
+                        <BoxView HeightRequest="1" Color="{StaticResource ColorBorderSubtle}" />
+                        <Label Text="Default Subject DN"
+                               FontFamily="InterSemiBold" FontSize="15"
+                               TextColor="{StaticResource ColorTextSecondary}" />
+
+                        <!-- Org / OU -->
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+                            <VerticalStackLayout Grid.Column="0" Spacing="6">
+                                <Label Text="Organization"
+                                       FontFamily="InterRegular" FontSize="15"
+                                       TextColor="{StaticResource ColorTextMuted}" />
+                                <Border BackgroundColor="{StaticResource ColorSurface}"
+                                        Stroke="{StaticResource ColorBorderSubtle}"
+                                        StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                                        Padding="12,0" HeightRequest="40">
+                                    <Entry Text="{Binding DefaultOrganization, Mode=TwoWay}"
+                                           Placeholder="Acme Corp"
+                                           FontFamily="InterRegular" FontSize="16"
+                                           TextColor="{StaticResource ColorTextPrimary}"
+                                           PlaceholderColor="{StaticResource ColorTextMuted}"
+                                           BackgroundColor="Transparent" />
+                                </Border>
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1" Spacing="6">
+                                <Label Text="Organizational unit"
+                                       FontFamily="InterRegular" FontSize="15"
+                                       TextColor="{StaticResource ColorTextMuted}" />
+                                <Border BackgroundColor="{StaticResource ColorSurface}"
+                                        Stroke="{StaticResource ColorBorderSubtle}"
+                                        StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                                        Padding="12,0" HeightRequest="40">
+                                    <Entry Text="{Binding DefaultOrganizationalUnit, Mode=TwoWay}"
+                                           Placeholder="Engineering"
+                                           FontFamily="InterRegular" FontSize="16"
+                                           TextColor="{StaticResource ColorTextPrimary}"
+                                           PlaceholderColor="{StaticResource ColorTextMuted}"
+                                           BackgroundColor="Transparent" />
+                                </Border>
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <!-- City / State / Country -->
+                        <Grid ColumnDefinitions="*,*,90" ColumnSpacing="16">
+                            <VerticalStackLayout Grid.Column="0" Spacing="6">
+                                <Label Text="City / Locality"
+                                       FontFamily="InterRegular" FontSize="15"
+                                       TextColor="{StaticResource ColorTextMuted}" />
+                                <Border BackgroundColor="{StaticResource ColorSurface}"
+                                        Stroke="{StaticResource ColorBorderSubtle}"
+                                        StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                                        Padding="12,0" HeightRequest="40">
+                                    <Entry Text="{Binding DefaultLocality, Mode=TwoWay}"
+                                           Placeholder="San Francisco"
+                                           FontFamily="InterRegular" FontSize="16"
+                                           TextColor="{StaticResource ColorTextPrimary}"
+                                           PlaceholderColor="{StaticResource ColorTextMuted}"
+                                           BackgroundColor="Transparent" />
+                                </Border>
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1" Spacing="6">
+                                <Label Text="State / Province"
+                                       FontFamily="InterRegular" FontSize="15"
+                                       TextColor="{StaticResource ColorTextMuted}" />
+                                <Border BackgroundColor="{StaticResource ColorSurface}"
+                                        Stroke="{StaticResource ColorBorderSubtle}"
+                                        StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                                        Padding="12,0" HeightRequest="40">
+                                    <Entry Text="{Binding DefaultStateOrProvince, Mode=TwoWay}"
+                                           Placeholder="California"
+                                           FontFamily="InterRegular" FontSize="16"
+                                           TextColor="{StaticResource ColorTextPrimary}"
+                                           PlaceholderColor="{StaticResource ColorTextMuted}"
+                                           BackgroundColor="Transparent" />
+                                </Border>
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="2" Spacing="6">
+                                <Label Text="Country"
+                                       FontFamily="InterRegular" FontSize="15"
+                                       TextColor="{StaticResource ColorTextMuted}" />
+                                <Border BackgroundColor="{StaticResource ColorSurface}"
+                                        Stroke="{StaticResource ColorBorderSubtle}"
+                                        StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                                        Padding="12,0" HeightRequest="40">
+                                    <Entry Text="{Binding DefaultCountry, Mode=TwoWay}"
+                                           Placeholder="US"
+                                           MaxLength="2"
+                                           FontFamily="JetBrainsMono" FontSize="16"
+                                           TextColor="{StaticResource ColorTextPrimary}"
+                                           PlaceholderColor="{StaticResource ColorTextMuted}"
+                                           BackgroundColor="Transparent" />
+                                </Border>
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <!-- Email -->
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Email address"
+                                   FontFamily="InterRegular" FontSize="15"
+                                   TextColor="{StaticResource ColorTextMuted}" />
+                            <Border BackgroundColor="{StaticResource ColorSurface}"
+                                    Stroke="{StaticResource ColorBorderSubtle}"
+                                    StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                                    Padding="12,0" HeightRequest="40">
+                                <Entry Text="{Binding DefaultEmail, Mode=TwoWay}"
+                                       Placeholder="admin@example.com"
+                                       Keyboard="Email"
+                                       FontFamily="InterRegular" FontSize="16"
+                                       TextColor="{StaticResource ColorTextPrimary}"
+                                       PlaceholderColor="{StaticResource ColorTextMuted}"
+                                       BackgroundColor="Transparent" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- ==================== Application ==================== -->
+                <Border Style="{StaticResource CardStyle}" Padding="24">
+                    <VerticalStackLayout Spacing="18">
+
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Grid.Column="0"
+                                   Text="Application"
+                                   FontFamily="InterSemiBold"
+                                   FontSize="19"
+                                   TextColor="{StaticResource ColorTextPrimary}" />
+                            <Label Grid.Column="1"
+                                   Text="Saved"
+                                   FontFamily="InterRegular"
+                                   FontSize="13"
+                                   TextColor="{StaticResource ColorSuccess}"
+                                   VerticalOptions="Center"
+                                   IsVisible="{Binding ShowSavedApp}" />
+                        </Grid>
+
+                        <!-- Activity log retention -->
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Activity log retention"
+                                   FontFamily="InterRegular" FontSize="15"
+                                   TextColor="{StaticResource ColorTextSecondary}" />
+                            <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="8">
+                                <controls:SegmentedOption Grid.Column="0"
+                                                          Text="100"
+                                                          UseMonoFont="True"
+                                                          IsSelected="{Binding IsRetention100}"
+                                                          Tapped="OnRetention100" />
+                                <controls:SegmentedOption Grid.Column="1"
+                                                          Text="500"
+                                                          UseMonoFont="True"
+                                                          IsSelected="{Binding IsRetention500}"
+                                                          Tapped="OnRetention500" />
+                                <controls:SegmentedOption Grid.Column="2"
+                                                          Text="1000"
+                                                          UseMonoFont="True"
+                                                          IsSelected="{Binding IsRetention1000}"
+                                                          Tapped="OnRetention1000" />
+                                <controls:SegmentedOption Grid.Column="3"
+                                                          Text="Unlimited"
+                                                          IsSelected="{Binding IsRetentionUnlimited}"
+                                                          Tapped="OnRetentionUnlimited" />
+                            </Grid>
+                            <Label Text="Older entries are pruned on the next write."
+                                   FontFamily="InterRegular" FontSize="13"
+                                   TextColor="{StaticResource ColorTextMuted}" />
+                        </VerticalStackLayout>
+
+                        <BoxView HeightRequest="1" Color="{StaticResource ColorBorderSubtle}" />
+
+                        <!-- Data folder -->
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Data folder"
+                                   FontFamily="InterRegular" FontSize="15"
+                                   TextColor="{StaticResource ColorTextSecondary}" />
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" VerticalOptions="Center">
+                                <Border Grid.Column="0"
+                                        BackgroundColor="{StaticResource ColorSurface}"
+                                        Stroke="{StaticResource ColorBorderSubtle}"
+                                        StrokeThickness="1"
+                                        StrokeShape="RoundRectangle 8"
+                                        Padding="12,0"
+                                        HeightRequest="40"
+                                        VerticalOptions="Center">
+                                    <Label Text="{Binding DataFolderPath}"
+                                           FontFamily="JetBrainsMono"
+                                           FontSize="16"
+                                           TextColor="{StaticResource ColorTextSecondary}"
+                                           LineBreakMode="MiddleTruncation"
+                                           VerticalOptions="Center"
+                                           ToolTipProperties.Text="{Binding DataFolderPath}" />
+                                </Border>
+                                <Button Grid.Column="1"
+                                        Text="{Binding RevealLabel}"
+                                        Command="{Binding RevealDataFolderCommand}"
+                                        IsVisible="{Binding HasDataFolder}"
+                                        HeightRequest="40"
+                                        Padding="14,0"
+                                        FontFamily="InterSemiBold"
+                                        FontSize="15"
+                                        TextColor="{StaticResource ColorTextPrimary}"
+                                        BackgroundColor="Transparent"
+                                        BorderColor="{StaticResource ColorBorderStrong}"
+                                        BorderWidth="1"
+                                        CornerRadius="10" />
+                            </Grid>
+                        </VerticalStackLayout>
+
+                        <BoxView HeightRequest="1" Color="{StaticResource ColorBorderSubtle}" />
+
+                        <!-- Clear activity log (destructive) -->
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                <Label Text="Clear activity log"
+                                       FontFamily="InterSemiBold" FontSize="15"
+                                       TextColor="{StaticResource ColorTextPrimary}" />
+                                <Label Text="Permanently removes every entry from this device's activity history. Certificates are not affected."
+                                       FontFamily="InterRegular" FontSize="13"
+                                       TextColor="{StaticResource ColorTextMuted}"
+                                       LineBreakMode="WordWrap" />
+                            </VerticalStackLayout>
+                            <Button Grid.Column="1"
+                                    Text="Clear"
+                                    Command="{Binding ClearActivityLogCommand}"
+                                    IsVisible="{Binding CanClearLog}"
+                                    HeightRequest="40"
+                                    Padding="18,0"
+                                    FontFamily="InterSemiBold"
+                                    FontSize="15"
+                                    TextColor="{StaticResource ColorDanger}"
+                                    BackgroundColor="Transparent"
+                                    BorderColor="{StaticResource ColorDanger}"
+                                    BorderWidth="1"
+                                    CornerRadius="10"
+                                    VerticalOptions="Start" />
+                        </Grid>
+
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- ==================== Version ==================== -->
+                <!-- Update checks run automatically every 6h on launch (see
+                     ShellViewModel.CheckForUpdateIfStaleAsync). When a newer
+                     version is found, IsUpdateAvailable flips true and the
+                     orange CTA panel below appears. Otherwise the card stays
+                     at its quiet "Installed vX.Y.Z" resting state. -->
+                <Border Style="{StaticResource CardStyle}" Padding="24">
+                    <VerticalStackLayout Spacing="16">
+
+                        <Label Text="Version"
+                               FontFamily="InterSemiBold" FontSize="19"
+                               TextColor="{StaticResource ColorTextPrimary}" />
+
+                        <!-- Installed + Latest version rows. The "Latest" line
+                             is dimmed when it equals Installed (no news = no
+                             attention) and brightened when newer (the orange
+                             CTA panel below carries the actual call to action). -->
+                        <VerticalStackLayout Spacing="6">
+                            <Grid ColumnDefinitions="90,*" ColumnSpacing="16" VerticalOptions="Center">
+                                <Label Grid.Column="0"
+                                       Text="Installed"
+                                       FontFamily="InterRegular" FontSize="15"
+                                       TextColor="{StaticResource ColorTextMuted}"
+                                       VerticalOptions="Center" />
+                                <Label Grid.Column="1"
+                                       Text="{Binding CurrentVersion, StringFormat='v{0}'}"
+                                       FontFamily="JetBrainsMono" FontSize="16"
+                                       TextColor="{StaticResource ColorTextPrimary}"
+                                       VerticalOptions="Center" />
+                            </Grid>
+                            <Grid ColumnDefinitions="90,*" ColumnSpacing="16" VerticalOptions="Center"
+                                  IsVisible="{Binding HasLatestPublishedVersion}">
+                                <Label Grid.Column="0"
+                                       Text="Latest"
+                                       FontFamily="InterRegular" FontSize="15"
+                                       TextColor="{StaticResource ColorTextMuted}"
+                                       VerticalOptions="Center" />
+                                <Label Grid.Column="1"
+                                       Text="{Binding LatestPublishedVersion, StringFormat='v{0}'}"
+                                       FontFamily="JetBrainsMono" FontSize="16"
+                                       TextColor="{StaticResource ColorTextPrimary}"
+                                       VerticalOptions="Center">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label"
+                                                     Binding="{Binding IsOnLatestPublishedVersion}"
+                                                     Value="True">
+                                            <Setter Property="TextColor" Value="{StaticResource ColorTextMuted}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Grid>
+                        </VerticalStackLayout>
+
+                        <!-- Update available — version, optional notes, primary CTA, progress -->
+                        <Border BackgroundColor="{StaticResource ColorPanelElevated}"
+                                Stroke="{StaticResource ColorBorderSubtle}"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 10"
+                                Padding="16,14"
+                                IsVisible="{Binding IsUpdateAvailable}">
+                            <VerticalStackLayout Spacing="12">
+                                <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
+                                    <Label Grid.Column="0"
+                                           Text="A new version is available"
+                                           FontFamily="InterSemiBold" FontSize="16"
+                                           TextColor="{StaticResource ColorTextPrimary}"
+                                           VerticalOptions="Center" />
+                                    <!-- Single primary orange CTA for the view (only when an update exists). -->
+                                    <Border Grid.Column="1"
+                                            BackgroundColor="{StaticResource ColorAccentPrimary}"
+                                            Stroke="{StaticResource Transparent}"
+                                            StrokeThickness="0"
+                                            StrokeShape="RoundRectangle 10"
+                                            Padding="18,0"
+                                            HeightRequest="40"
+                                            VerticalOptions="Center"
+                                            IsVisible="{Binding IsDownloading, Converter={StaticResource InverseBool}}">
+                                        <Border.Behaviors>
+                                            <controls:PrimaryButtonBehavior />
+                                        </Border.Behaviors>
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding DownloadAndInstallCommand}" />
+                                        </Border.GestureRecognizers>
+                                        <Label Text="Download &amp; Install"
+                                               FontFamily="InterSemiBold" FontSize="15"
+                                               TextColor="White"
+                                               VerticalOptions="Center" HorizontalOptions="Center" />
+                                    </Border>
+                                </Grid>
+
+                                <!-- Release notes (optional, truncated) -->
+                                <Label Text="{Binding AvailableUpdate.ReleaseNotes}"
+                                       FontFamily="InterRegular" FontSize="15"
+                                       TextColor="{StaticResource ColorTextSecondary}"
+                                       LineBreakMode="WordWrap"
+                                       MaxLines="3"
+                                       IsVisible="{Binding AvailableUpdate.ReleaseNotes, Converter={StaticResource NotNullToBool}}" />
+
+                                <!-- Download progress -->
+                                <ProgressBar Progress="{Binding DownloadProgressNormalized}"
+                                             ProgressColor="{StaticResource ColorAccentPrimary}"
+                                             IsVisible="{Binding IsDownloading}"
+                                             HeightRequest="3" />
+                            </VerticalStackLayout>
+                        </Border>
+
+                    </VerticalStackLayout>
+                </Border>
+
+        </VerticalStackLayout>
+    </ScrollView>
 
 </ContentView>

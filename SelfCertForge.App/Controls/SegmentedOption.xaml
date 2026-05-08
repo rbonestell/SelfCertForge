@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SelfCertForge.App.Controls.SegmentedOption"
+             x:Name="Root">
+
+    <!-- Single segment of a segmented selector. Renders as a Border with a
+         centered Label; selected state swaps background to ColorPanelElevated
+         and stroke to ColorAccentPrimary. Designed to avoid Win2D-heavy
+         primitives — only Border + Label, no Path/Ellipse. -->
+    <Border BackgroundColor="Transparent"
+            Stroke="{StaticResource ColorBorderSubtle}"
+            StrokeThickness="1"
+            StrokeShape="RoundRectangle 8"
+            HeightRequest="36">
+        <Border.Triggers>
+            <DataTrigger TargetType="Border"
+                         Binding="{Binding Source={x:Reference Root}, Path=IsSelected}"
+                         Value="True">
+                <Setter Property="BackgroundColor" Value="{StaticResource ColorPanelElevated}" />
+                <Setter Property="Stroke" Value="{StaticResource ColorAccentPrimary}" />
+            </DataTrigger>
+        </Border.Triggers>
+        <Border.GestureRecognizers>
+            <TapGestureRecognizer Tapped="OnTapped" />
+        </Border.GestureRecognizers>
+        <Label Text="{Binding Source={x:Reference Root}, Path=Text}"
+               FontFamily="{Binding Source={x:Reference Root}, Path=ResolvedFontFamily}"
+               FontSize="15"
+               HorizontalOptions="Center"
+               VerticalOptions="Center"
+               TextColor="{StaticResource ColorTextMuted}">
+            <Label.Triggers>
+                <DataTrigger TargetType="Label"
+                             Binding="{Binding Source={x:Reference Root}, Path=IsSelected}"
+                             Value="True">
+                    <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
+                </DataTrigger>
+            </Label.Triggers>
+        </Label>
+    </Border>
+
+</ContentView>

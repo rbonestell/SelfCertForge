@@ -52,6 +52,7 @@ public sealed class ForgeService : IForgeService
                 KeySizeBits = request.KeyBits,
                 ValidForDays = request.ValidityDays,
                 SubjectDn = BuildSubjectDn(request),
+                HashAlgorithm = request.HashAlgorithm,
             }, ct).ConfigureAwait(false);
         }
         else
@@ -83,6 +84,7 @@ public sealed class ForgeService : IForgeService
                 KeyUsageDecipherOnly = request.KeyUsageDecipherOnly,
                 EkuServerAuth = request.EkuServerAuth,
                 EkuClientAuth = request.EkuClientAuth,
+                HashAlgorithm = request.HashAlgorithm,
             }, ct).ConfigureAwait(false);
         }
 

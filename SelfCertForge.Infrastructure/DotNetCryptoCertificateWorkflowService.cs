@@ -29,7 +29,7 @@ public sealed class DotNetCryptoCertificateWorkflowService : ICertificateWorkflo
         var req = new CertificateRequest(
             request.SubjectDn,
             key,
-            HashAlgorithmName.SHA256,
+            ToHashName(request.HashAlgorithm),
             RSASignaturePadding.Pkcs1);
 
         req.CertificateExtensions.Add(
@@ -92,7 +92,7 @@ public sealed class DotNetCryptoCertificateWorkflowService : ICertificateWorkflo
         var req = new CertificateRequest(
             request.SubjectDn,
             leafKey,
-            HashAlgorithmName.SHA256,
+            ToHashName(request.HashAlgorithm),
             RSASignaturePadding.Pkcs1);
 
         req.CertificateExtensions.Add(
@@ -295,4 +295,11 @@ public sealed class DotNetCryptoCertificateWorkflowService : ICertificateWorkflo
     }
 
     private static bool HasValue(string? value) => !string.IsNullOrWhiteSpace(value);
+
+    private static HashAlgorithmName ToHashName(HashAlgorithmKind kind) => kind switch
+    {
+        HashAlgorithmKind.Sha384 => HashAlgorithmName.SHA384,
+        HashAlgorithmKind.Sha512 => HashAlgorithmName.SHA512,
+        _                        => HashAlgorithmName.SHA256,
+    };
 }

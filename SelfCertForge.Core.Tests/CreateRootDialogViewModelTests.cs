@@ -8,38 +8,52 @@ namespace SelfCertForge.Core.Tests;
 public sealed class CreateRootDialogViewModelTests
 {
     [Fact]
-    public void InitialState_CannotSubmit()
+    public void InitialState_CanSubmit_ValidityIsDefault()
     {
+        // CommonName is no longer part of CanSubmit; required-field check happens
+        // at submit time so the user sees a visible "required" indicator instead
+        // of a silently-disabled button. ValidityDays > 0 still gates.
         var vm = new CreateRootDialogViewModel(new FakeForgeService(_ => FakeCert()));
-        vm.CanSubmit.Should().BeFalse();
-    }
-
-    [Fact]
-    public void CanSubmit_IsFalse_WhenCommonNameBlank()
-    {
-        var vm = new CreateRootDialogViewModel(new FakeForgeService(_ => FakeCert()));
-        vm.CommonName = "   ";
-        vm.CanSubmit.Should().BeFalse();
-    }
-
-    [Fact]
-    public void CanSubmit_IsTrue_WhenCommonNameSet()
-    {
-        var vm = new CreateRootDialogViewModel(new FakeForgeService(_ => FakeCert()));
-        vm.CommonName = "My Root";
         vm.CanSubmit.Should().BeTrue();
     }
 
     [Fact]
-    public void CanSubmit_IsFalse_WhenValidityDaysZero()
+    public void CanSubmit_IsFalse_WhenValidityDaysInvalid()
     {
         var vm = new CreateRootDialogViewModel(new FakeForgeService(_ => FakeCert()));
-        vm.CommonName = "My Root";
         vm.ValidityDays = 0;
         vm.CanSubmit.Should().BeFalse();
     }
 
     [Fact]
+    public void Submit_WithBlankCommonName_FlagsErrorAndDoesNotForge()
+    {
+        var forge = new FakeForgeService(_ => FakeCert());
+        var vm = new CreateRootDialogViewModel(forge);
+        vm.CommonName = "   ";
+        StoredCertificate? raised = null;
+        vm.Created += (_, c) => raised = c;
+
+        ((ICommand)vm.CreateCommand).Execute(null);
+
+        vm.CommonNameHasError.Should().BeTrue();
+        vm.IsCreating.Should().BeFalse();
+        forge.CallCount.Should().Be(0);
+        raised.Should().BeNull();
+    }
+
+    [Fact]
+    public void EditingCommonName_ClearsCommonNameError()
+    {
+        var vm = new CreateRootDialogViewModel(new FakeForgeService(_ => FakeCert()));
+        ((ICommand)vm.CreateCommand).Execute(null);
+        vm.CommonNameHasError.Should().BeTrue();
+
+        vm.CommonName = "r";
+        vm.CommonNameHasError.Should().BeFalse();
+    }
+
+[Fact]
     public void Reset_ClearsAllFields()
     {
         var vm = new CreateRootDialogViewModel(new FakeForgeService(_ => FakeCert()));
@@ -97,9 +111,13 @@ public sealed class CreateRootDialogViewModelTests
     private sealed class FakeForgeService : IForgeService
     {
         private readonly Func<ForgeRequest, StoredCertificate> _factory;
+        public int CallCount { get; private set; }
         public FakeForgeService(Func<ForgeRequest, StoredCertificate> factory) => _factory = factory;
-        public Task<StoredCertificate> ForgeAsync(ForgeRequest request, CancellationToken ct = default) =>
-            Task.FromResult(_factory(request));
+        public Task<StoredCertificate> ForgeAsync(ForgeRequest request, CancellationToken ct = default)
+        {
+            CallCount++;
+            return Task.FromResult(_factory(request));
+        }
     }
 
     private sealed class ThrowingForgeService : IForgeService

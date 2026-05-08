@@ -22,4 +22,5 @@ public sealed record ForgeRequest(
     bool KeyUsageEncipherOnly = false,
     bool KeyUsageDecipherOnly = false,
     bool EkuServerAuth = false,
-    bool EkuClientAuth = false);
+    bool EkuClientAuth = false,
+    HashAlgorithmKind HashAlgorithm = HashAlgorithmKind.Sha256);

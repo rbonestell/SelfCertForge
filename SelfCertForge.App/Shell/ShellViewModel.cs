@@ -1,4 +1,5 @@
 using System.Windows.Input;
+using SelfCertForge.Core.Abstractions;
 using SelfCertForge.Core.Presentation;
 
 namespace SelfCertForge.App.Shell;
@@ -6,14 +7,17 @@ namespace SelfCertForge.App.Shell;
 public sealed class ShellViewModel : ObservableObject
 {
     private const string LastUpdateCheckKey = "LastUpdateCheckUtc";
+    private static readonly TimeSpan UpdateCheckInterval = TimeSpan.FromHours(6);
 
     private readonly SettingsViewModel _settings;
+    private readonly IGithubReleaseService? _githubRelease;
     private AppRoute _currentRoute = AppRoute.Dashboard;
     private bool _isUpdateAvailable;
 
-    public ShellViewModel(SettingsViewModel settings)
+    public ShellViewModel(SettingsViewModel settings, IGithubReleaseService? githubRelease = null)
     {
         _settings = settings;
+        _githubRelease = githubRelease;
         _settings.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(SettingsViewModel.IsUpdateAvailable))
@@ -31,7 +35,13 @@ public sealed class ShellViewModel : ObservableObject
             }
         });
 
+        // Velopack check is gated by the 6h stale interval (it has install-side
+        // effects and we shouldn't churn the network); the GitHub releases poll
+        // is a single cheap REST call so we always run it on launch to keep the
+        // "Latest" line in Settings fresh after every restart.
         _ = CheckForUpdateIfStaleAsync();
+        if (_githubRelease is not null)
+            _ = _githubRelease.RefreshAsync();
     }
 
     public AppRoute CurrentRoute
@@ -70,7 +80,7 @@ public sealed class ShellViewModel : ObservableObject
         {
             var lastCheckStr = Preferences.Get(LastUpdateCheckKey, string.Empty);
             if (DateTimeOffset.TryParse(lastCheckStr, out var lastCheck)
-                && DateTimeOffset.UtcNow - lastCheck < TimeSpan.FromHours(24))
+                && DateTimeOffset.UtcNow - lastCheck < UpdateCheckInterval)
             {
                 return;
             }

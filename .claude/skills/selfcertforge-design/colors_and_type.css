@@ -72,8 +72,8 @@
 
   /* ── Radii ────────────────────────────────────────────── */
   --radius-sm:  6px;
-  --radius-md:  10px;
-  --radius-lg:  12px;   /* buttons */
+  --radius-md:  10px;   /* buttons */
+  --radius-lg:  12px;
   --radius-xl:  16px;   /* cards */
   --radius-2xl: 20px;   /* modals */
   --radius-pill: 999px;

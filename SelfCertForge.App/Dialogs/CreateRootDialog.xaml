@@ -43,6 +43,11 @@
                             Stroke="{StaticResource ColorBorderSubtle}"
                             StrokeThickness="1" StrokeShape="RoundRectangle 8"
                             Padding="12,0" HeightRequest="40">
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding CommonNameHasError}" Value="True">
+                                <Setter Property="Stroke" Value="{StaticResource ColorDanger}" />
+                            </DataTrigger>
+                        </Border.Triggers>
                         <Entry Text="{Binding CommonName, Mode=TwoWay}"
                                Placeholder="root.local"
                                IsEnabled="{Binding IsNotCreating}"
@@ -50,6 +55,10 @@
                                PlaceholderColor="{StaticResource ColorTextMuted}"
                                BackgroundColor="Transparent" />
                     </Border>
+                    <Label Text="Common name is required."
+                           FontFamily="InterRegular" FontSize="13"
+                           TextColor="{StaticResource ColorDanger}"
+                           IsVisible="{Binding CommonNameHasError}" />
                 </VerticalStackLayout>
 
                 <!-- Email Address -->
@@ -163,12 +172,25 @@
                                 Stroke="{StaticResource ColorBorderSubtle}"
                                 StrokeThickness="1" StrokeShape="RoundRectangle 8"
                                 Padding="12,0" HeightRequest="40">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding ValidityHasError}" Value="True">
+                                    <Setter Property="Stroke" Value="{StaticResource ColorDanger}" />
+                                </DataTrigger>
+                            </Border.Triggers>
                             <Entry Text="{Binding ValidityDays, Mode=TwoWay}"
                                    Keyboard="Numeric"
                                    IsEnabled="{Binding IsNotCreating}"
                                    FontFamily="JetBrainsMono" FontSize="16" TextColor="{StaticResource ColorTextPrimary}"
-                                   BackgroundColor="Transparent" />
+                                   BackgroundColor="Transparent">
+                                <Entry.Behaviors>
+                                    <controls:NumericEntryBehavior />
+                                </Entry.Behaviors>
+                            </Entry>
                         </Border>
+                        <Label Text="Must be greater than 0."
+                               FontFamily="InterRegular" FontSize="13"
+                               TextColor="{StaticResource ColorDanger}"
+                               IsVisible="{Binding ValidityHasError}" />
                     </VerticalStackLayout>
                     <VerticalStackLayout Grid.Column="1" Spacing="5">
                         <Label Text="Key size (bits)"

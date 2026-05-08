@@ -96,7 +96,7 @@ In `App.xaml` ResourceDictionary, register every token from `colors_and_type.css
 <x:String x:Key="FontMono">JetBrainsMono</x:String>
 
 <!-- Radii -->
-<x:Double x:Key="RadiusButton">12</x:Double>
+<x:Double x:Key="RadiusButton">10</x:Double>
 <x:Double x:Key="RadiusCard">16</x:Double>
 <x:Double x:Key="RadiusModal">20</x:Double>
 ```

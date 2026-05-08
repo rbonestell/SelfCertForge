@@ -3,18 +3,23 @@ using System.Linq;
 using System.Windows.Input;
 using SelfCertForge.Core.Abstractions;
 using SelfCertForge.Core.Models;
+using SelfCertForge.Core.Validation;
 
 namespace SelfCertForge.Core.Presentation;
 
 public sealed class CreateSignedCertDialogViewModel : ObservableObject
 {
     private readonly IForgeService _forge;
+    private readonly IUserPreferencesStore? _preferences;
 
     private string _issuerId = string.Empty;
     private string _issuerName = string.Empty;
     private string _commonName = string.Empty;
     private string _newSanValue = string.Empty;
     private string _newSanType = "DNS";
+    private string? _sanValidationError;
+    private bool _validityHasError;
+    private bool _commonNameHasError;
     private int _validityDays = 397;
     private int _keyBits = 2048;
     private bool _isCreating;
@@ -28,13 +33,24 @@ public sealed class CreateSignedCertDialogViewModel : ObservableObject
     private bool _keyUsageDecipherOnly = false;
     private bool _ekuServerAuth = false;
     private bool _ekuClientAuth = false;
+    private HashAlgorithmKind _hashAlgorithm = HashAlgorithmKind.Sha256;
 
     public CreateSignedCertDialogViewModel(IForgeService forge)
+        : this(forge, null) { }
+
+    public CreateSignedCertDialogViewModel(IForgeService forge, IUserPreferencesStore? preferences)
     {
         _forge = forge;
+        _preferences = preferences;
         CreateCommand = new AsyncRelayCommand(SubmitAsync, () => CanSubmit);
         CancelCommand = new RelayCommand(() => CancelRequested?.Invoke(this, EventArgs.Empty));
         AddSanCommand = new RelayCommand(AddSan, () => !string.IsNullOrWhiteSpace(_newSanValue) && !_isCreating);
+    }
+
+    public HashAlgorithmKind HashAlgorithm
+    {
+        get => _hashAlgorithm;
+        set => SetProperty(ref _hashAlgorithm, value);
     }
 
     public event EventHandler<StoredCertificate>? Created;
@@ -56,7 +72,20 @@ public sealed class CreateSignedCertDialogViewModel : ObservableObject
     public string CommonName
     {
         get => _commonName;
-        set { if (SetProperty(ref _commonName, value)) Notify(); }
+        set
+        {
+            if (SetProperty(ref _commonName, value))
+            {
+                if (_commonNameHasError) CommonNameHasError = false;
+                Notify();
+            }
+        }
+    }
+
+    public bool CommonNameHasError
+    {
+        get => _commonNameHasError;
+        private set => SetProperty(ref _commonNameHasError, value);
     }
 
     public string NewSanValue
@@ -65,7 +94,12 @@ public sealed class CreateSignedCertDialogViewModel : ObservableObject
         set
         {
             if (SetProperty(ref _newSanValue, value?.Trim() ?? string.Empty))
+            {
+                // Any edit clears the previous validation error so the user sees
+                // a clean state until they hit "Add" again.
+                if (_sanValidationError is not null) SanValidationError = null;
                 ((RelayCommand)AddSanCommand).RaiseCanExecuteChanged();
+            }
         }
     }
 
@@ -75,16 +109,45 @@ public sealed class CreateSignedCertDialogViewModel : ObservableObject
         set
         {
             if (SetProperty(ref _newSanType, value))
+            {
                 OnPropertyChanged(nameof(NewSanPlaceholder));
+                // Switching type invalidates whatever error referred to the prior type.
+                if (_sanValidationError is not null) SanValidationError = null;
+            }
         }
     }
+
+    public string? SanValidationError
+    {
+        get => _sanValidationError;
+        private set
+        {
+            if (SetProperty(ref _sanValidationError, value))
+                OnPropertyChanged(nameof(HasSanValidationError));
+        }
+    }
+
+    public bool HasSanValidationError => _sanValidationError is not null;
 
     public string NewSanPlaceholder => _newSanType == "IP" ? "127.0.0.1" : "api.local";
 
     public int ValidityDays
     {
         get => _validityDays;
-        set => SetProperty(ref _validityDays, value);
+        set
+        {
+            if (SetProperty(ref _validityDays, value))
+            {
+                ValidityHasError = value <= 0;
+                Notify();
+            }
+        }
+    }
+
+    public bool ValidityHasError
+    {
+        get => _validityHasError;
+        private set => SetProperty(ref _validityHasError, value);
     }
 
     public int KeyBits
@@ -194,7 +257,6 @@ public sealed class CreateSignedCertDialogViewModel : ObservableObject
 
     public bool CanSubmit =>
         !_isCreating &&
-        !string.IsNullOrWhiteSpace(_commonName) &&
         _validityDays > 0 &&
         !string.IsNullOrEmpty(_issuerId);
 
@@ -206,8 +268,10 @@ public sealed class CreateSignedCertDialogViewModel : ObservableObject
         NewSanType = "DNS";
         SanEntries.Clear();
         OnPropertyChanged(nameof(HasSanEntries));
-        ValidityDays = 397;
-        KeyBits = 2048;
+        var p = _preferences?.Current ?? UserPreferences.Default;
+        ValidityDays = p.SignedValidityDays;
+        KeyBits = p.KeyBits;
+        HashAlgorithm = p.HashAlgorithm;
         KeyUsageDigitalSignature = true;
         KeyUsageNonRepudiation = false;
         KeyUsageKeyEncipherment = true;
@@ -218,6 +282,9 @@ public sealed class CreateSignedCertDialogViewModel : ObservableObject
         EkuServerAuth = false;
         EkuClientAuth = false;
         ErrorMessage = null;
+        SanValidationError = null;
+        ValidityHasError = false;
+        CommonNameHasError = false;
         IsCreating = false;
         IssuerName = issuerName;
     }
@@ -225,6 +292,13 @@ public sealed class CreateSignedCertDialogViewModel : ObservableObject
     private async Task SubmitAsync()
     {
         if (!CanSubmit) return;
+
+        if (string.IsNullOrWhiteSpace(_commonName))
+        {
+            CommonNameHasError = true;
+            return;
+        }
+
         IsCreating = true;
         ErrorMessage = null;
         try
@@ -245,7 +319,8 @@ public sealed class CreateSignedCertDialogViewModel : ObservableObject
                 KeyUsageEncipherOnly: _keyUsageEncipherOnly,
                 KeyUsageDecipherOnly: _keyUsageDecipherOnly,
                 EkuServerAuth: _ekuServerAuth,
-                EkuClientAuth: _ekuClientAuth));
+                EkuClientAuth: _ekuClientAuth,
+                HashAlgorithm: _hashAlgorithm));
             Created?.Invoke(this, stored);
             IsCreating = false;
         }
@@ -259,7 +334,22 @@ public sealed class CreateSignedCertDialogViewModel : ObservableObject
     private void AddSan()
     {
         var value = _newSanValue.Trim();
-        if (string.IsNullOrEmpty(value)) return;
+        if (string.IsNullOrEmpty(value))
+        {
+            SanValidationError = _newSanType == "IP"
+                ? "IP address cannot be empty."
+                : "DNS name cannot be empty.";
+            return;
+        }
+
+        var result = SanRules.Validate(_newSanType, value);
+        if (!result.IsValid)
+        {
+            SanValidationError = result.Error;
+            return;
+        }
+
+        SanValidationError = null;
         SanEntries.Add(new SanEntryViewModel(_newSanType, value, RemoveSan));
         NewSanValue = string.Empty;
         OnPropertyChanged(nameof(HasSanEntries));

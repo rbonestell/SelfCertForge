@@ -57,14 +57,48 @@ public static class MauiProgram
         ;
 
         builder.Services.AddSelfCertForgeInfrastructure();
+
+        // GitHub releases informational poll. Single endpoint, polled once per
+        // launch — IHttpClientFactory would be over-engineered. The HttpClient
+        // singleton lives for the app's lifetime alongside the service.
+        builder.Services.AddSingleton<IGithubReleaseService>(_ =>
+            new GithubReleaseService(new HttpClient(), "rbonestell", "SelfCertForge"));
+
+        // Preferences store — must register before consumers (activity log, dialogs, settings vm).
+        builder.Services.AddSingleton<IUserPreferencesStore>(sp =>
+        {
+            var store = new JsonUserPreferencesStore(FileSystem.AppDataDirectory);
+            // Best-effort load; failures fall back to defaults inside the store.
+            _ = store.LoadAsync();
+            return store;
+        });
+
         builder.Services.AddSingleton<ICertificateStore>(_ =>
             new JsonCertificateStore(FileSystem.AppDataDirectory));
-        builder.Services.AddSingleton<IActivityLog>(_ =>
-            new JsonActivityLog(FileSystem.AppDataDirectory));
+        builder.Services.AddSingleton<IActivityLog>(sp =>
+            new JsonActivityLog(FileSystem.AppDataDirectory,
+                sp.GetRequiredService<IUserPreferencesStore>()));
+
+        // Platform-specific data-folder reveal service.
+#if MACCATALYST
+        builder.Services.AddSingleton<IDataFolderService>(_ =>
+            new Platforms.MacCatalyst.MacDataFolderService(FileSystem.AppDataDirectory));
+#elif WINDOWS
+        builder.Services.AddSingleton<IDataFolderService>(_ =>
+            new Platforms.Windows.WindowsDataFolderService(FileSystem.AppDataDirectory));
+#endif
+
         builder.Services.AddSingleton<SettingsViewModel>(sp => new SettingsViewModel(
-            sp.GetRequiredService<IUpdateService>()));
+            sp.GetRequiredService<IUpdateService>(),
+            sp.GetRequiredService<IUserPreferencesStore>(),
+            sp.GetRequiredService<IActivityLog>(),
+            // Optional — only registered on macCatalyst/Windows; null on other TFMs.
+            sp.GetService<IDataFolderService>(),
+            sp.GetRequiredService<IConfirmationDialog>(),
+            sp.GetRequiredService<IGithubReleaseService>()));
         builder.Services.AddSingleton<ShellViewModel>(sp => new ShellViewModel(
-            sp.GetRequiredService<SettingsViewModel>()));
+            sp.GetRequiredService<SettingsViewModel>(),
+            sp.GetRequiredService<IGithubReleaseService>()));
         builder.Services.AddSingleton<ShellPage>(sp => new ShellPage(
             sp.GetRequiredService<ShellViewModel>()));
         builder.Services.AddSingleton<CertificatesViewModel>(sp => new CertificatesViewModel(
@@ -91,8 +125,12 @@ public static class MauiProgram
         builder.Services.AddSingleton<ITrustStoreChecker, SystemTrustStoreChecker>();
         builder.Services.AddSingleton<ICreateRootDialog, CreateRootDialogHost>();
         builder.Services.AddSingleton<ICreateSignedCertDialog, CreateSignedCertDialogHost>();
-        builder.Services.AddTransient<CreateRootDialogViewModel>();
-        builder.Services.AddTransient<CreateSignedCertDialogViewModel>();
+        builder.Services.AddTransient<CreateRootDialogViewModel>(sp => new CreateRootDialogViewModel(
+            sp.GetRequiredService<IForgeService>(),
+            sp.GetRequiredService<IUserPreferencesStore>()));
+        builder.Services.AddTransient<CreateSignedCertDialogViewModel>(sp => new CreateSignedCertDialogViewModel(
+            sp.GetRequiredService<IForgeService>(),
+            sp.GetRequiredService<IUserPreferencesStore>()));
         builder.Services.AddTransient<CreateRootDialog>();
         builder.Services.AddTransient<CreateSignedCertDialog>();
 
