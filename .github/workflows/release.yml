@@ -9,7 +9,10 @@ permissions:
   id-token: write   # required for Azure OIDC federated auth
 
 env:
-  DOTNET_VERSION: "10.0.101"
+  # Must match global.json's sdk.version (workflow uses setup-dotnet to install
+  # exactly this; mismatches cause "Requested SDK version: X not found" on the
+  # ubuntu upload job, which has no pre-installed .NET 10).
+  DOTNET_VERSION: "10.0.203"
   APP_PROJECT: "SelfCertForge.App/SelfCertForge.App.csproj"
   APP_NAME: "SelfCertForge"
   APPLE_BUNDLE_ID: "com.rbonestell.selfcertforge.app"
