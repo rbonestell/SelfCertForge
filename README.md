@@ -20,8 +20,8 @@ A .NET MAUI desktop app for generating and managing self-signed certificates and
 Download the appropriate installer for your operating system:
 
 <p align="center">
-	<a href="https://github.com/rbonestell/SelfCertForge/releases/latest/download/SelfCertForge-osx-Setup.pkg"><img src="assets/download-macos.png" alt="Download for macOS"></a>
-	<a href="https://github.com/rbonestell/SelfCertForge/releases/latest/download/SelfCertForge-win-x64-Setup.exe"><img src="assets/download-windows.png" alt="Download for Windows"></a>
+	<a href="https://github.com/rbonestell/SelfCertForge/releases/latest/download/SelfCertForge-osx-Setup.pkg"><img src="assets/download-macos.png" width="180" alt="Download for macOS"></a>
+	<a href="https://github.com/rbonestell/SelfCertForge/releases/latest/download/SelfCertForge-win-x64-Setup.exe"><img src="assets/download-windows.png" width="180" alt="Download for Windows"></a>
 </p>
 
 ## Screenshots
