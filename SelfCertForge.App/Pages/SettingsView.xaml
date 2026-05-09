@@ -417,17 +417,35 @@
                 </Border>
 
                 <!-- ==================== Version ==================== -->
-                <!-- Update checks run automatically every 6h on launch (see
-                     ShellViewModel.CheckForUpdateIfStaleAsync). When a newer
-                     version is found, IsUpdateAvailable flips true and the
-                     orange CTA panel below appears. Otherwise the card stays
-                     at its quiet "Installed vX.Y.Z" resting state. -->
+                <!-- Background update checks run on launch (see ShellViewModel —
+                     the GitHub releases poll always runs; the Velopack check is
+                     6h-gated UNLESS the GitHub poll surfaces a newer version, in
+                     which case the gate is bypassed). The "Check for updates"
+                     button below is the manual fallback so the user is never
+                     stuck without a way to retry. -->
                 <Border Style="{StaticResource CardStyle}" Padding="24">
                     <VerticalStackLayout Spacing="16">
 
-                        <Label Text="Version"
-                               FontFamily="InterSemiBold" FontSize="19"
-                               TextColor="{StaticResource ColorTextPrimary}" />
+                        <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
+                            <Label Grid.Column="0"
+                                   Text="Version"
+                                   FontFamily="InterSemiBold" FontSize="19"
+                                   TextColor="{StaticResource ColorTextPrimary}"
+                                   VerticalOptions="Center" />
+                            <Button Grid.Column="1"
+                                    Text="Check for updates"
+                                    Command="{Binding CheckForUpdateCommand}"
+                                    IsEnabled="{Binding IsCheckingForUpdate, Converter={StaticResource InverseBool}}"
+                                    HeightRequest="36"
+                                    Padding="14,0"
+                                    FontFamily="InterSemiBold"
+                                    FontSize="14"
+                                    TextColor="{StaticResource ColorTextPrimary}"
+                                    BackgroundColor="Transparent"
+                                    BorderColor="{StaticResource ColorBorderSubtle}"
+                                    BorderWidth="1"
+                                    CornerRadius="8" />
+                        </Grid>
 
                         <!-- Installed + Latest version rows. The "Latest" line
                              is dimmed when it equals Installed (no news = no
@@ -521,6 +539,54 @@
                                              HeightRequest="3" />
                             </VerticalStackLayout>
                         </Border>
+
+                        <!-- Fallback CTA: Velopack can't drive the update (portable / dev install)
+                             but a newer version is published on GitHub. Without this, users on
+                             unmanaged installs would see the version mismatch with no way to act. -->
+                        <Border BackgroundColor="{StaticResource ColorPanelElevated}"
+                                Stroke="{StaticResource ColorBorderSubtle}"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 10"
+                                Padding="16,14"
+                                IsVisible="{Binding ShowUpdateUnsupportedFallback}">
+                            <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
+                                <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
+                                    <Label Text="A new version is available on GitHub"
+                                           FontFamily="InterSemiBold" FontSize="16"
+                                           TextColor="{StaticResource ColorTextPrimary}" />
+                                    <Label Text="In-app update isn't available for this install. Open the releases page to download manually."
+                                           FontFamily="InterRegular" FontSize="13"
+                                           TextColor="{StaticResource ColorTextMuted}"
+                                           LineBreakMode="WordWrap" />
+                                </VerticalStackLayout>
+                                <Border Grid.Column="1"
+                                        BackgroundColor="Transparent"
+                                        Stroke="{StaticResource ColorBorderSubtle}"
+                                        StrokeThickness="1"
+                                        StrokeShape="RoundRectangle 10"
+                                        Padding="14,0"
+                                        HeightRequest="36"
+                                        VerticalOptions="Center">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnOpenReleasesPage" />
+                                    </Border.GestureRecognizers>
+                                    <Label Text="Download"
+                                           FontFamily="InterSemiBold" FontSize="14"
+                                           TextColor="{StaticResource ColorTextPrimary}"
+                                           VerticalOptions="Center" HorizontalOptions="Center" />
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <!-- Status message: surfaces the result of the most recent
+                             check ("You're on the latest version.", "Update check failed.",
+                             progress strings during download). Previously set by the VM
+                             but never bound — leaving the user with no feedback. -->
+                        <Label Text="{Binding UpdateStatusMessage}"
+                               IsVisible="{Binding HasUpdateStatusMessage}"
+                               FontFamily="InterRegular" FontSize="13"
+                               TextColor="{StaticResource ColorTextMuted}"
+                               LineBreakMode="WordWrap" />
 
                     </VerticalStackLayout>
                 </Border>

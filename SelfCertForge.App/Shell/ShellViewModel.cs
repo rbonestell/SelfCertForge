@@ -41,7 +41,25 @@ public sealed class ShellViewModel : ObservableObject
         // "Latest" line in Settings fresh after every restart.
         _ = CheckForUpdateIfStaleAsync();
         if (_githubRelease is not null)
+        {
+            // If the GitHub poll surfaces a published version that doesn't match the
+            // installed one, override the 6h Velopack stale-gate. Without this, an
+            // app launched shortly after the last gated check would silently see
+            // "Latest v0.1.0" alongside "Installed v0.0.2" with no update CTA — the
+            // exact dead-end users reported.
+            _githubRelease.Changed += (_, latest) => MaybeForceVelopackCheck(latest);
+            // Also handle the case where the GH refresh already completed in a prior
+            // VM lifetime (service is a singleton) — the Changed event won't replay.
+            MaybeForceVelopackCheck(_githubRelease.LatestPublishedVersion);
             _ = _githubRelease.RefreshAsync();
+        }
+    }
+
+    private void MaybeForceVelopackCheck(string? latest)
+    {
+        if (string.IsNullOrEmpty(latest)) return;
+        if (string.Equals(latest, _settings.CurrentVersion, StringComparison.OrdinalIgnoreCase)) return;
+        _ = _settings.CheckForUpdateAsync();
     }
 
     public AppRoute CurrentRoute

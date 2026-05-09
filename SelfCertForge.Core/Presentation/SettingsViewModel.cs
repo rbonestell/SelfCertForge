@@ -124,6 +124,7 @@ public sealed class SettingsViewModel : ObservableObject
             {
                 OnPropertyChanged(nameof(HasLatestPublishedVersion));
                 OnPropertyChanged(nameof(IsOnLatestPublishedVersion));
+                OnPropertyChanged(nameof(ShowUpdateUnsupportedFallback));
             }
         }
     }
@@ -134,6 +135,32 @@ public sealed class SettingsViewModel : ObservableObject
     public bool IsOnLatestPublishedVersion =>
         HasLatestPublishedVersion &&
         string.Equals(CurrentVersion, _latestPublishedVersion, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// True when the in-app updater (Velopack) is wired and operating against a managed install.
+    /// False for portable/dev builds, in which case <see cref="ShowUpdateUnsupportedFallback"/>
+    /// surfaces a "download from GitHub" CTA instead of the silent dead-end the user hit pre-fix.
+    /// </summary>
+    public bool IsUpdateSupported => _updateService.IsUpdateSupported;
+
+    /// <summary>
+    /// True when Velopack can't drive an in-app update but a newer version is visible on GitHub.
+    /// Drives the fallback CTA — without this, users on unmanaged installs would see "Latest vX.Y.Z"
+    /// next to their older Installed version with no way to act on it.
+    /// </summary>
+    public bool ShowUpdateUnsupportedFallback =>
+        !IsUpdateSupported && HasLatestPublishedVersion && !IsOnLatestPublishedVersion;
+
+    /// <summary>
+    /// Direct download URL for the current OS's installer. Hardcoded against the
+    /// `/releases/latest/download/` redirect so it always resolves to the newest
+    /// release without re-querying the API. Asset names mirror what the build
+    /// pipeline publishes (see VelopackUpdateService channel naming).
+    /// </summary>
+    public string DownloadUrl =>
+        OperatingSystem.IsMacOS() || OperatingSystem.IsMacCatalyst()
+            ? "https://github.com/rbonestell/SelfCertForge/releases/latest/download/SelfCertForge-osx-Setup.pkg"
+            : "https://github.com/rbonestell/SelfCertForge/releases/latest/download/SelfCertForge-win-x64-Setup.exe";
 
     // -- Updates -------------------------------------------------------------
 
@@ -386,7 +413,12 @@ public sealed class SettingsViewModel : ObservableObject
             {
                 IsUpdateAvailable = false;
                 AvailableUpdate = null;
-                UpdateStatusMessage = "You're on the latest version.";
+                // Suppress the "latest version" message when the GitHub fallback CTA
+                // will render — otherwise we'd contradict ourselves by saying both
+                // "you're on the latest" and "a new version is available on GitHub".
+                UpdateStatusMessage = ShowUpdateUnsupportedFallback
+                    ? null
+                    : "You're on the latest version.";
             }
         }
         catch

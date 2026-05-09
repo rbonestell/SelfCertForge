@@ -39,4 +39,13 @@ public partial class SettingsView : ContentView
     private void OnRetention500(object? sender, EventArgs e)        => Vm.ActivityRetention = ActivityRetention.FiveHundred;
     private void OnRetention1000(object? sender, EventArgs e)       => Vm.ActivityRetention = ActivityRetention.OneThousand;
     private void OnRetentionUnlimited(object? sender, EventArgs e)  => Vm.ActivityRetention = ActivityRetention.Unlimited;
+
+    // -- Update fallback ----------------------------------------------------
+    private async void OnOpenReleasesPage(object? sender, TappedEventArgs e)
+    {
+        var url = Vm.DownloadUrl;
+        if (string.IsNullOrEmpty(url)) return;
+        try { await Launcher.Default.OpenAsync(new Uri(url)); }
+        catch { /* best-effort UX action */ }
+    }
 }
