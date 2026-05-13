@@ -6,6 +6,7 @@
 </p>
 <p align="center">
 	<a href="https://github.com/rbonestell/SelfCertForge/releases/latest"><img src="https://img.shields.io/github/v/release/rbonestell/SelfCertForge?label=version" alt="Latest Version"></a>
+	<a href="https://github.com/rbonestell/SelfCertForge/releases/latest"><img src="https://img.shields.io/github/downloads/rbonestell/SelfCertForge/total?color=blue" alt="Downloads"></a>
 	<a href="https://snyk.io/test/github/rbonestell/SelfCertForge"><img src="https://img.shields.io/badge/security-monitored-8A2BE2?logo=snyk" alt="Monitored by Snyk"></a>
 	<a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-3DA639?logo=opensourceinitiative&logoColor=white" alt="License"></a>
 </p>
