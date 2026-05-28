@@ -6,7 +6,7 @@ using Xunit;
 
 namespace SelfCertForge.Core.Tests;
 
-public class CreateFromCsrDialogViewModelTests
+public sealed class CreateFromCsrDialogViewModelTests
 {
     private static CsrSummary BasicSummary(
         IReadOnlyList<string>? sans = null,

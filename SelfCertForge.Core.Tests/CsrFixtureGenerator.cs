@@ -7,16 +7,20 @@ internal static class CsrFixtureGenerator
 {
     public static string ValidRsa(int bits, string subjectDn,
         IEnumerable<string>? sanDnsNames = null,
+        IEnumerable<string>? sanIpAddresses = null,
         X509KeyUsageFlags? keyUsage = null,
         IEnumerable<string>? ekuOids = null)
     {
         using var rsa = RSA.Create(bits);
         var req = new CertificateRequest(subjectDn, rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
 
-        if (sanDnsNames is not null)
+        if (sanDnsNames is not null || sanIpAddresses is not null)
         {
             var sanBuilder = new SubjectAlternativeNameBuilder();
-            foreach (var dns in sanDnsNames) sanBuilder.AddDnsName(dns);
+            if (sanDnsNames is not null)
+                foreach (var dns in sanDnsNames) sanBuilder.AddDnsName(dns);
+            if (sanIpAddresses is not null)
+                foreach (var ip in sanIpAddresses) sanBuilder.AddIpAddress(System.Net.IPAddress.Parse(ip));
             req.CertificateExtensions.Add(sanBuilder.Build(critical: false));
         }
         if (keyUsage is not null)

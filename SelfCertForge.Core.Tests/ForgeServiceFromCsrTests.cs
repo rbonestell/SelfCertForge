@@ -114,6 +114,7 @@ public sealed class ForgeServiceFromCsrTests : IDisposable
         EkuClientAuth: false,
         EkuCodeSigning: false,
         EkuTimeStamping: false,
+        EkuEmailProtection: false,
         SignatureHashAlgorithm: HashAlgorithmKind.Sha256);
 }
 

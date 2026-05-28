@@ -49,6 +49,8 @@ public partial class CreateFromCsrDialog : ContentPage
         _viewModel.EkuCodeSigning = !_viewModel.EkuCodeSigning;
     private void OnEkuTimeStampingTapped(object? sender, TappedEventArgs e) =>
         _viewModel.EkuTimeStamping = !_viewModel.EkuTimeStamping;
+    private void OnEkuEmailProtectionTapped(object? sender, TappedEventArgs e) =>
+        _viewModel.EkuEmailProtection = !_viewModel.EkuEmailProtection;
 
     private void OnHashSha256(object? sender, EventArgs e) =>
         _viewModel.HashAlgorithm = HashAlgorithmKind.Sha256;

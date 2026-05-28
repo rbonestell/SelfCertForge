@@ -378,7 +378,7 @@
                                        FontFamily="InterRegular" FontSize="13" TextColor="{StaticResource ColorTextMuted}"
                                        IsVisible="{Binding IsEkuLocked}" />
                             </Grid>
-                            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto"
+                            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto"
                                   ColumnSpacing="8" RowSpacing="6"
                                   IsEnabled="{Binding IsEkuLocked, Converter={StaticResource InverseBool}}">
 
@@ -472,6 +472,31 @@
                                                 <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
                                             </DataTrigger>
                                             <DataTrigger TargetType="Label" Binding="{Binding EkuTimeStamping}" Value="False">
+                                                <Setter Property="TextColor" Value="{StaticResource ColorTextMuted}" />
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                </Border>
+
+                                <!-- Row 2 -->
+                                <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                                        BackgroundColor="Transparent" Stroke="{StaticResource ColorBorderSubtle}"
+                                        StrokeThickness="1" StrokeShape="RoundRectangle 8" HeightRequest="34" Padding="12,0">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding EkuEmailProtection}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                                            <Setter Property="Stroke" Value="{StaticResource ColorAccentPrimary}" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnEkuEmailProtectionTapped" />
+                                    </Border.GestureRecognizers>
+                                    <Label Text="Email Protection" FontFamily="InterRegular" FontSize="13" VerticalOptions="Center">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding EkuEmailProtection}" Value="True">
+                                                <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
+                                            </DataTrigger>
+                                            <DataTrigger TargetType="Label" Binding="{Binding EkuEmailProtection}" Value="False">
                                                 <Setter Property="TextColor" Value="{StaticResource ColorTextMuted}" />
                                             </DataTrigger>
                                         </Label.Triggers>

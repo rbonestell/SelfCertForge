@@ -146,6 +146,81 @@ public sealed class GenerateCertificateFromCsrTests : IDisposable
         names.Should().Contain("added.example");
     }
 
+    [Fact]
+    public async Task Strips_KeyCertSign_and_CrlSign_even_when_requested()
+    {
+        var csrPem = CsrFixtureGenerator.ValidRsa(2048, "CN=device-ca-attempt");
+        var outDir = Path.Combine(_tmpDir, "out-ca-strip");
+
+        var req = MakeRequest(csrPem) with
+        {
+            KeyUsageDigitalSignature = true,
+            KeyUsageKeyCertSign = true,
+            KeyUsageCrlSign = true,
+        };
+
+        var result = await _svc.GenerateCertificateFromCsrAsync(
+            req, _caCertPath, _caKeyPath, outDir, "device-ca-attempt");
+
+        var pem = File.ReadAllText(result.CertPemPath);
+        using var issued = X509Certificate2.CreateFromPem(pem);
+
+        var ku = issued.Extensions.OfType<X509KeyUsageExtension>().Single();
+        ku.KeyUsages.HasFlag(X509KeyUsageFlags.KeyCertSign).Should().BeFalse();
+        ku.KeyUsages.HasFlag(X509KeyUsageFlags.CrlSign).Should().BeFalse();
+        ku.KeyUsages.HasFlag(X509KeyUsageFlags.DigitalSignature).Should().BeTrue();
+
+        var bc = issued.Extensions.OfType<X509BasicConstraintsExtension>().Single();
+        bc.CertificateAuthority.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Preserves_IP_address_SANs_from_csr_through_signing()
+    {
+        var csrPem = CsrFixtureGenerator.ValidRsa(2048, "CN=device-ip",
+            sanDnsNames: new[] { "device.example" },
+            sanIpAddresses: new[] { "192.0.2.42" });
+        var outDir = Path.Combine(_tmpDir, "out-ip-san");
+
+        var req = MakeRequest(csrPem) with
+        {
+            Sans = new[]
+            {
+                new CsrSignedSanEntry("device.example", CsrSignedSanOrigin.FromCsr),
+                new CsrSignedSanEntry("IP:192.0.2.42", CsrSignedSanOrigin.FromCsr),
+            },
+        };
+
+        var result = await _svc.GenerateCertificateFromCsrAsync(
+            req, _caCertPath, _caKeyPath, outDir, "device-ip");
+
+        var pem = File.ReadAllText(result.CertPemPath);
+        using var issued = X509Certificate2.CreateFromPem(pem);
+        var san = issued.Extensions.OfType<X509SubjectAlternativeNameExtension>().Single();
+
+        san.EnumerateDnsNames().Should().Contain("device.example");
+        san.EnumerateIPAddresses().Select(ip => ip.ToString())
+            .Should().Contain("192.0.2.42");
+    }
+
+    [Fact]
+    public async Task Honors_EkuEmailProtection_from_csr()
+    {
+        var csrPem = CsrFixtureGenerator.ValidRsa(2048, "CN=device-email");
+        var outDir = Path.Combine(_tmpDir, "out-eku-email");
+
+        var req = MakeRequest(csrPem) with { EkuEmailProtection = true };
+
+        var result = await _svc.GenerateCertificateFromCsrAsync(
+            req, _caCertPath, _caKeyPath, outDir, "device-email");
+
+        var pem = File.ReadAllText(result.CertPemPath);
+        using var issued = X509Certificate2.CreateFromPem(pem);
+
+        var eku = issued.Extensions.OfType<X509EnhancedKeyUsageExtension>().Single();
+        eku.EnhancedKeyUsages.Cast<Oid>().Should().Contain(o => o.Value == "1.3.6.1.5.5.7.3.4");
+    }
+
     private CsrSigningRequest MakeRequest(string csrPem) => new(
         SigningAuthorityId: "test-ca",
         RawCsrPem: csrPem,
@@ -163,5 +238,6 @@ public sealed class GenerateCertificateFromCsrTests : IDisposable
         EkuClientAuth: false,
         EkuCodeSigning: false,
         EkuTimeStamping: false,
+        EkuEmailProtection: false,
         SignatureHashAlgorithm: HashAlgorithmKind.Sha256);
 }

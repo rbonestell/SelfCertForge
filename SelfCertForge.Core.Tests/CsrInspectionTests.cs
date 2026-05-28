@@ -25,6 +25,41 @@ public sealed class CsrInspectionTests
     }
 
     [Fact]
+    public async Task ValidRsa4096_returns_IsValid_with_4096_bits()
+    {
+        var pem = CsrFixtureGenerator.ValidRsa(4096, "CN=large-key.example");
+        var result = await Svc.InspectCsrAsync(pem);
+
+        result.IsValid.Should().BeTrue();
+        result.Summary!.PublicKeyAlgorithm.Should().Be("RSA");
+        result.Summary.PublicKeyBits.Should().Be(4096);
+    }
+
+    [Fact]
+    public async Task ValidRsa_with_ip_sans_includes_ips_in_RequestedSans()
+    {
+        var pem = CsrFixtureGenerator.ValidRsa(2048, "CN=example.local",
+            sanDnsNames: new[] { "example.local" },
+            sanIpAddresses: new[] { "10.0.0.1" });
+        var result = await Svc.InspectCsrAsync(pem);
+
+        result.IsValid.Should().BeTrue();
+        result.Summary!.RequestedSans.Should().Contain("example.local");
+        result.Summary.RequestedSans.Should().Contain("IP:10.0.0.1");
+    }
+
+    [Fact]
+    public async Task Rsa1024_tampered_returns_KeyTooSmall_and_InvalidProofOfPossession()
+    {
+        var pem = CsrFixtureGenerator.TamperedRsa(1024, "CN=example.local");
+        var result = await Svc.InspectCsrAsync(pem);
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(CsrValidationError.KeyTooSmall);
+        result.Errors.Should().Contain(CsrValidationError.InvalidProofOfPossession);
+    }
+
+    [Fact]
     public async Task ValidRsa_with_sans_populates_RequestedSans()
     {
         var pem = CsrFixtureGenerator.ValidRsa(2048, "CN=example.local",

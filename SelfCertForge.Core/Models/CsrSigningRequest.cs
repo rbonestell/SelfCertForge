@@ -25,4 +25,5 @@ public sealed record CsrSigningRequest(
     bool EkuClientAuth,
     bool EkuCodeSigning,
     bool EkuTimeStamping,
+    bool EkuEmailProtection,
     HashAlgorithmKind SignatureHashAlgorithm);

@@ -28,7 +28,7 @@ public sealed class CreateFromCsrDialogViewModel : ObservableObject
 
     private bool _kuDigitalSignature, _kuNonRepudiation, _kuKeyEncipherment, _kuDataEncipherment,
                  _kuKeyAgreement, _kuKeyCertSign, _kuCrlSign;
-    private bool _ekuServerAuth, _ekuClientAuth, _ekuCodeSigning, _ekuTimeStamping;
+    private bool _ekuServerAuth, _ekuClientAuth, _ekuCodeSigning, _ekuTimeStamping, _ekuEmailProtection;
     private HashAlgorithmKind _hashAlgorithm = HashAlgorithmKind.Sha256;
 
     public CreateFromCsrDialogViewModel(IForgeService forge, IUserPreferencesStore? preferences = null)
@@ -81,6 +81,7 @@ public sealed class CreateFromCsrDialogViewModel : ObservableObject
     public bool EkuClientAuth   { get => _ekuClientAuth;   set { if (!IsEkuLocked) SetProperty(ref _ekuClientAuth, value); } }
     public bool EkuCodeSigning  { get => _ekuCodeSigning;  set { if (!IsEkuLocked) SetProperty(ref _ekuCodeSigning, value); } }
     public bool EkuTimeStamping { get => _ekuTimeStamping; set { if (!IsEkuLocked) SetProperty(ref _ekuTimeStamping, value); } }
+    public bool EkuEmailProtection { get => _ekuEmailProtection; set { if (!IsEkuLocked) SetProperty(ref _ekuEmailProtection, value); } }
 
     public HashAlgorithmKind HashAlgorithm { get => _hashAlgorithm; set => SetProperty(ref _hashAlgorithm, value); }
 
@@ -132,6 +133,7 @@ public sealed class CreateFromCsrDialogViewModel : ObservableObject
             _ekuClientAuth = e.ClientAuth;
             _ekuCodeSigning = e.CodeSigning;
             _ekuTimeStamping = e.TimeStamping;
+            _ekuEmailProtection = e.EmailProtection;
         }
         else
         {
@@ -177,6 +179,7 @@ public sealed class CreateFromCsrDialogViewModel : ObservableObject
                 EkuClientAuth: _ekuClientAuth,
                 EkuCodeSigning: _ekuCodeSigning,
                 EkuTimeStamping: _ekuTimeStamping,
+                EkuEmailProtection: _ekuEmailProtection,
                 SignatureHashAlgorithm: _hashAlgorithm);
 
             var stored = await _forge.ForgeFromCsrAsync(new ForgeFromCsrRequest(request));

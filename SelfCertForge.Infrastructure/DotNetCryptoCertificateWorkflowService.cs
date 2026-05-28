@@ -261,7 +261,13 @@ public sealed class DotNetCryptoCertificateWorkflowService : ICertificateWorkflo
         foreach (var ext in req.CertificateExtensions)
         {
             if (ext is X509SubjectAlternativeNameExtension san)
-                return san.EnumerateDnsNames().ToArray();
+            {
+                var values = new List<string>();
+                values.AddRange(san.EnumerateDnsNames());
+                foreach (var ip in san.EnumerateIPAddresses())
+                    values.Add("IP:" + ip);
+                return values;
+            }
         }
         return Array.Empty<string>();
     }
@@ -360,7 +366,19 @@ public sealed class DotNetCryptoCertificateWorkflowService : ICertificateWorkflo
         if (sans.Count > 0)
         {
             var sanBuilder = new SubjectAlternativeNameBuilder();
-            foreach (var s in sans) sanBuilder.AddDnsName(s);
+            foreach (var s in sans)
+            {
+                if (s.StartsWith("IP:", StringComparison.OrdinalIgnoreCase)
+                    && System.Net.IPAddress.TryParse(s[3..], out var ip))
+                {
+                    sanBuilder.AddIpAddress(ip);
+                }
+                else
+                {
+                    var dns = s.StartsWith("DNS:", StringComparison.OrdinalIgnoreCase) ? s[4..] : s;
+                    sanBuilder.AddDnsName(dns);
+                }
+            }
             csrReq.CertificateExtensions.Add(sanBuilder.Build(critical: false));
         }
 
@@ -399,18 +417,20 @@ public sealed class DotNetCryptoCertificateWorkflowService : ICertificateWorkflo
         if (r.KeyUsageKeyEncipherment)  f |= X509KeyUsageFlags.KeyEncipherment;
         if (r.KeyUsageDataEncipherment) f |= X509KeyUsageFlags.DataEncipherment;
         if (r.KeyUsageKeyAgreement)     f |= X509KeyUsageFlags.KeyAgreement;
-        if (r.KeyUsageKeyCertSign)      f |= X509KeyUsageFlags.KeyCertSign;
-        if (r.KeyUsageCrlSign)          f |= X509KeyUsageFlags.CrlSign;
+        // KeyCertSign / CrlSign are CA-only KU bits. CSR-signed certs are end-entity
+        // (BasicConstraints CA=false), so we never propagate them — even if a CSR
+        // or operator requests them — to prevent issuing a sub-CA by accident.
         return f;
     }
 
     private static OidCollection BuildCsrEkuOids(CsrSigningRequest r)
     {
         var oids = new OidCollection();
-        if (r.EkuServerAuth)   oids.Add(new Oid("1.3.6.1.5.5.7.3.1"));
-        if (r.EkuClientAuth)   oids.Add(new Oid("1.3.6.1.5.5.7.3.2"));
-        if (r.EkuCodeSigning)  oids.Add(new Oid("1.3.6.1.5.5.7.3.3"));
-        if (r.EkuTimeStamping) oids.Add(new Oid("1.3.6.1.5.5.7.3.8"));
+        if (r.EkuServerAuth)      oids.Add(new Oid("1.3.6.1.5.5.7.3.1"));
+        if (r.EkuClientAuth)      oids.Add(new Oid("1.3.6.1.5.5.7.3.2"));
+        if (r.EkuCodeSigning)     oids.Add(new Oid("1.3.6.1.5.5.7.3.3"));
+        if (r.EkuEmailProtection) oids.Add(new Oid("1.3.6.1.5.5.7.3.4"));
+        if (r.EkuTimeStamping)    oids.Add(new Oid("1.3.6.1.5.5.7.3.8"));
         return oids;
     }
 
