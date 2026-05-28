@@ -52,7 +52,7 @@ public sealed class CertificatesViewModel : ObservableObject
 
         ExportKeyPemCommand = new AsyncRelayCommand(
             execute: ExportKeyPemAsync,
-            canExecute: () => HasSelection && SelectedRow!.HasPrivateKey && _exportService is not null && _folderPicker is not null);
+            canExecute: () => HasSelection && _exportService is not null && _folderPicker is not null);
 
         ExportPfxCommand = new AsyncRelayCommand(
             execute: ExportPfxAsync,
@@ -251,7 +251,11 @@ public sealed class CertificateRowViewModel : ObservableObject
     public bool IsFromCsr => Source.IssuedFromCsr;
     public bool HasPrivateKey => !string.IsNullOrEmpty(Source.PrivateKeyPath);
     public bool CanExportPfx => HasPrivateKey;
-    public bool CanExportKeyPem => HasPrivateKey;
+    // PEM export writes the cert as .pem (and the .key alongside when a private
+    // key exists). CSR-signed certs ship without a key but the cert itself is
+    // still exportable, so this is gated on having a stored cert path, not on
+    // having a key.
+    public bool CanExportKeyPem => !string.IsNullOrEmpty(Source.CertificatePath);
     public string? SourceCsrFilename => Source.SourceCsrFilename;
 
     public bool IsSelected

@@ -14,7 +14,9 @@ public sealed class CertificatesViewModelCsrTests
         Assert.True(row.IsFromCsr);
         Assert.False(row.HasPrivateKey);
         Assert.False(row.CanExportPfx);
-        Assert.False(row.CanExportKeyPem);
+        // PEM export only needs the cert path — CSR-signed certs without a
+        // private key still emit a valid cert .pem.
+        Assert.True(row.CanExportKeyPem);
     }
 
     [Fact]
