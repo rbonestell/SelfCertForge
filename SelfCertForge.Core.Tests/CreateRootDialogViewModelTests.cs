@@ -118,6 +118,8 @@ public sealed class CreateRootDialogViewModelTests
             CallCount++;
             return Task.FromResult(_factory(request));
         }
+        public Task<StoredCertificate> ForgeFromCsrAsync(ForgeFromCsrRequest request, CancellationToken ct = default)
+            => throw new NotImplementedException();
     }
 
     private sealed class ThrowingForgeService : IForgeService
@@ -126,5 +128,7 @@ public sealed class CreateRootDialogViewModelTests
         public ThrowingForgeService(Exception ex) => _ex = ex;
         public Task<StoredCertificate> ForgeAsync(ForgeRequest request, CancellationToken ct = default) =>
             Task.FromException<StoredCertificate>(_ex);
+        public Task<StoredCertificate> ForgeFromCsrAsync(ForgeFromCsrRequest request, CancellationToken ct = default)
+            => throw new NotImplementedException();
     }
 }

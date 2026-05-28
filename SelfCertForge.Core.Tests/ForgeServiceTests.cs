@@ -173,4 +173,16 @@ file sealed class FakeCertificateWorkflowService : ICertificateWorkflowService
             KeyPath = keyPath,
         });
     }
+
+    public Task<CsrInspectionResult> InspectCsrAsync(string csrPem, CancellationToken cancellationToken = default)
+        => throw new NotImplementedException();
+
+    public Task<CertificateGenerationResult> GenerateCertificateFromCsrAsync(
+        CsrSigningRequest request,
+        string issuerCertificatePath,
+        string issuerPrivateKeyPath,
+        string outputDirectory,
+        string outputFileBaseName,
+        CancellationToken cancellationToken = default)
+        => throw new NotImplementedException();
 }

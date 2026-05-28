@@ -248,5 +248,7 @@ public sealed class CreateSignedCertDialogViewModelTests
             CallCount++;
             return Task.FromResult(_factory(request));
         }
+        public Task<StoredCertificate> ForgeFromCsrAsync(ForgeFromCsrRequest request, CancellationToken ct = default)
+            => throw new NotImplementedException();
     }
 }
