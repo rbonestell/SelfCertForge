@@ -176,17 +176,9 @@
                                                          Label="{Binding PillLabel}" />
                                     <controls:StatusPill Kind="{Binding TrustPillKind}"
                                                          Label="{Binding TrustPillLabel}" />
-                                    <Border IsVisible="{Binding IsFromCsr}"
-                                            BackgroundColor="{StaticResource ColorAccentPrimaryDeep}"
-                                            StrokeShape="RoundRectangle 6"
-                                            Stroke="{StaticResource Transparent}"
-                                            StrokeThickness="0"
-                                            Padding="6,2">
-                                        <Label Text="From CSR"
-                                               FontFamily="InterSemiBold"
-                                               FontSize="11"
-                                               TextColor="{StaticResource ColorTextPrimary}" />
-                                    </Border>
+                                    <controls:StatusPill IsVisible="{Binding IsFromCsr}"
+                                                         Kind="csr"
+                                                         Label="From CSR" />
                                 </HorizontalStackLayout>
                             </VerticalStackLayout>
 

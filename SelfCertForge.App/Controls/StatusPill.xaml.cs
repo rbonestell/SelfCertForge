@@ -51,6 +51,7 @@ public partial class StatusPill : ContentView
         var warning = (Color)Application.Current.Resources["ColorWarning"];
         var danger  = (Color)Application.Current.Resources["ColorDanger"];
         var muted   = (Color)Application.Current.Resources["ColorTextMuted"];
+        var brand   = (Color)Application.Current.Resources["ColorAccentPrimary"];
 
         var solid = kind switch
         {
@@ -59,6 +60,7 @@ public partial class StatusPill : ContentView
             "expiring"  => warning,
             "expired"   => danger,
             "orphaned"  => danger,
+            "csr"       => brand,
             _           => muted,
         };
 
