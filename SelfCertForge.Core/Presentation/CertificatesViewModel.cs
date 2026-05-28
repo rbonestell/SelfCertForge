@@ -314,6 +314,7 @@ public sealed class CertificateDetailViewModel
             ? string.Join(", ", source.ExtendedKeyUsages)
             : "—";
         HasKeyUsage = source.KeyUsages is { Count: > 0 } || source.ExtendedKeyUsages is { Count: > 0 };
+        IsFromCsr = source.IssuedFromCsr;
     }
 
     public string CommonName { get; }
@@ -333,4 +334,5 @@ public sealed class CertificateDetailViewModel
     public string KeyUsages { get; }
     public string ExtendedKeyUsages { get; }
     public bool HasKeyUsage { get; }
+    public bool IsFromCsr { get; }
 }

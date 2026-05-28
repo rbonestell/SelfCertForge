@@ -125,6 +125,12 @@ public static class MauiProgram
         builder.Services.AddSingleton<ITrustStoreChecker, SystemTrustStoreChecker>();
         builder.Services.AddSingleton<ICreateRootDialog, CreateRootDialogHost>();
         builder.Services.AddSingleton<ICreateSignedCertDialog, CreateSignedCertDialogHost>();
+        builder.Services.AddSingleton<ICsrFilePicker, MauiCsrFilePicker>();
+        builder.Services.AddSingleton<ICreateFromCsrDialog>(sp => new CreateFromCsrDialogHost(sp));
+        builder.Services.AddTransient<CreateFromCsrDialog>();
+        builder.Services.AddTransient<CreateFromCsrDialogViewModel>(sp => new CreateFromCsrDialogViewModel(
+            sp.GetRequiredService<IForgeService>(),
+            sp.GetRequiredService<IUserPreferencesStore>()));
         builder.Services.AddTransient<CreateRootDialogViewModel>(sp => new CreateRootDialogViewModel(
             sp.GetRequiredService<IForgeService>(),
             sp.GetRequiredService<IUserPreferencesStore>()));
@@ -144,7 +150,10 @@ public static class MauiProgram
             sp.GetRequiredService<IFolderPicker>(),
             sp.GetRequiredService<IPfxPasswordDialog>(),
             sp.GetRequiredService<IConfirmationDialog>(),
-            sp.GetRequiredService<ITrustStoreChecker>()));
+            sp.GetRequiredService<ITrustStoreChecker>(),
+            sp.GetRequiredService<ICreateFromCsrDialog>(),
+            sp.GetRequiredService<ICsrFilePicker>(),
+            sp.GetRequiredService<ICertificateWorkflowService>()));
 
 #if DEBUG
         builder.Logging.AddDebug();

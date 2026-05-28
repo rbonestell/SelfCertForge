@@ -176,6 +176,17 @@
                                                          Label="{Binding PillLabel}" />
                                     <controls:StatusPill Kind="{Binding TrustPillKind}"
                                                          Label="{Binding TrustPillLabel}" />
+                                    <Border IsVisible="{Binding IsFromCsr}"
+                                            BackgroundColor="{StaticResource ColorAccentMuted}"
+                                            StrokeShape="RoundRectangle 6"
+                                            Stroke="{StaticResource Transparent}"
+                                            StrokeThickness="0"
+                                            Padding="6,2">
+                                        <Label Text="From CSR"
+                                               FontFamily="InterSemiBold"
+                                               FontSize="11"
+                                               TextColor="{StaticResource ColorTextPrimary}" />
+                                    </Border>
                                 </HorizontalStackLayout>
                             </VerticalStackLayout>
 
@@ -298,7 +309,9 @@
                     <VerticalStackLayout Spacing="0">
 
                         <!-- Export .KEY/.PEM -->
-                        <Grid Padding="16,14">
+                        <Grid Padding="16,14"
+                              IsEnabled="{Binding SelectedRow.CanExportKeyPem}"
+                              ToolTipProperties.Text="Private key not stored — CSR-signed certs ship without one.">
                             <Grid.Behaviors>
                                 <controls:MenuItemHoverBehavior />
                             </Grid.Behaviors>
@@ -314,7 +327,9 @@
                         <BoxView Color="#80FFFFFF" HeightRequest="1" />
 
                         <!-- Export .PFX -->
-                        <Grid Padding="16,14">
+                        <Grid Padding="16,14"
+                              IsEnabled="{Binding SelectedRow.CanExportPfx}"
+                              ToolTipProperties.Text="Private key not stored — CSR-signed certs ship without one.">
                             <Grid.Behaviors>
                                 <controls:MenuItemHoverBehavior />
                             </Grid.Behaviors>

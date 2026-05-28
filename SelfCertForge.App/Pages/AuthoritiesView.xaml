@@ -320,6 +320,39 @@
                                     </HorizontalStackLayout>
                                 </Border>
 
+                                <!-- Action: Create From CSR -->
+                                <Border BackgroundColor="{StaticResource ColorAccentPrimary}"
+                                        Stroke="{StaticResource Transparent}"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 10"
+                                        Padding="18,0"
+                                        HeightRequest="42"
+                                        HorizontalOptions="Start">
+                                    <Border.Behaviors>
+                                        <controls:PrimaryButtonBehavior />
+                                    </Border.Behaviors>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding CreateFromCsrCommand}" />
+                                    </Border.GestureRecognizers>
+                                    <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                                        <Grid WidthRequest="16" HeightRequest="16" VerticalOptions="Center">
+                                            <shapes:Path Data="{x:Static controls:IconPaths.Signature}"
+                                                         Stroke="White"
+                                                         StrokeThickness="1.5"
+                                                         StrokeLineCap="Round"
+                                                         StrokeLineJoin="Round"
+                                                         Aspect="Uniform"
+                                                         WidthRequest="16"
+                                                         HeightRequest="16" />
+                                        </Grid>
+                                        <Label Text="Create From Certificate Signing Request"
+                                               FontFamily="InterSemiBold"
+                                               FontSize="15"
+                                               TextColor="White"
+                                               VerticalOptions="Center" />
+                                    </HorizontalStackLayout>
+                                </Border>
+
                             </VerticalStackLayout>
                         </VerticalStackLayout>
                     </Grid>
