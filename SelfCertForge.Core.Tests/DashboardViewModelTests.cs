@@ -51,6 +51,19 @@ public sealed class DashboardViewModelTests
     }
 
     [Fact]
+    public async Task SignedFromCsr_activity_entry_renders_friendly_label()
+    {
+        var log = new FakeLog();
+        await log.AppendAsync(new ActivityEntry(
+            "a1", Now.AddMinutes(-1), "SignedFromCsr",
+            "Signed certificate from CSR \"x.csr\" issued by Test CA.", "cert-id"));
+
+        var vm = new DashboardViewModel(new FakeStore(), log, () => Now);
+
+        vm.Activity.Should().ContainSingle().Which.KindLabel.Should().Be("Signed from CSR");
+    }
+
+    [Fact]
     public void StoreChange_TriggersRefresh()
     {
         var store = new FakeStore();

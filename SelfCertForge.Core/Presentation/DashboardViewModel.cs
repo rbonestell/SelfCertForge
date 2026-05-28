@@ -79,12 +79,23 @@ public sealed class ActivityRowViewModel
     {
         Message = entry.Message;
         Kind = entry.Kind;
+        KindLabel = MapKindLabel(entry.Kind);
         TimeLabel = FormatRelative(now - entry.At);
     }
 
     public string Message { get; }
     public string Kind { get; }
+    public string KindLabel { get; }
     public string TimeLabel { get; }
+
+    private static string MapKindLabel(string kind) => kind switch
+    {
+        "forged-root"   => "Forged root",
+        "forged-child"  => "Forged certificate",
+        "forged"        => "Forged certificate",
+        "SignedFromCsr" => "Signed from CSR",
+        _ => kind,
+    };
 
     private static string FormatRelative(TimeSpan delta)
     {
