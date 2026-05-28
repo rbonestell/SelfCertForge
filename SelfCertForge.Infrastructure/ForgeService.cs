@@ -165,6 +165,9 @@ public sealed class ForgeService : IForgeService
         return stored;
     }
 
+    public Task<StoredCertificate> ForgeFromCsrAsync(ForgeFromCsrRequest request, CancellationToken ct = default)
+        => throw new NotImplementedException("Implemented in Task 6.");
+
     private static string BuildSubjectDn(ForgeRequest r)
     {
         var parts = new List<string>();

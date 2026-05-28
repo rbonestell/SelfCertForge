@@ -164,6 +164,18 @@ public sealed class DotNetCryptoCertificateWorkflowService : ICertificateWorkflo
         });
     }
 
+    public Task<CsrInspectionResult> InspectCsrAsync(string csrPem, CancellationToken cancellationToken = default)
+        => throw new NotImplementedException("Implemented in Task 4.");
+
+    public Task<CertificateGenerationResult> GenerateCertificateFromCsrAsync(
+        CsrSigningRequest request,
+        string issuerCertificatePath,
+        string issuerPrivateKeyPath,
+        string outputDirectory,
+        string outputFileBaseName,
+        CancellationToken cancellationToken = default)
+        => throw new NotImplementedException("Implemented in Task 5.");
+
     private static void ValidateSourceContract(SignedCertificateRequest request)
     {
         var hasSeparateFields = HasValue(request.RootPrivateKeyPath) || HasValue(request.RootCertificatePath);
