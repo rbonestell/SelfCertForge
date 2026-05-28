@@ -101,28 +101,7 @@ public sealed class ForgeService : IForgeService
             ? n
             : $"RSA {request.KeyBits}";
 
-        var keyUsages = new List<string>();
-        var ekuList = new List<string>();
-        foreach (var ext in x509.Extensions)
-        {
-            if (ext is X509KeyUsageExtension ku)
-            {
-                if (ku.KeyUsages.HasFlag(X509KeyUsageFlags.DigitalSignature))  keyUsages.Add("Digital Signature");
-                if (ku.KeyUsages.HasFlag(X509KeyUsageFlags.NonRepudiation))    keyUsages.Add("Non-Repudiation");
-                if (ku.KeyUsages.HasFlag(X509KeyUsageFlags.KeyEncipherment))   keyUsages.Add("Key Encipherment");
-                if (ku.KeyUsages.HasFlag(X509KeyUsageFlags.DataEncipherment))  keyUsages.Add("Data Encipherment");
-                if (ku.KeyUsages.HasFlag(X509KeyUsageFlags.KeyAgreement))      keyUsages.Add("Key Agreement");
-                if (ku.KeyUsages.HasFlag(X509KeyUsageFlags.KeyCertSign))       keyUsages.Add("Certificate Signing");
-                if (ku.KeyUsages.HasFlag(X509KeyUsageFlags.CrlSign))           keyUsages.Add("CRL Signing");
-                if (ku.KeyUsages.HasFlag(X509KeyUsageFlags.EncipherOnly))      keyUsages.Add("Encipher Only");
-                if (ku.KeyUsages.HasFlag(X509KeyUsageFlags.DecipherOnly))      keyUsages.Add("Decipher Only");
-            }
-            else if (ext is X509EnhancedKeyUsageExtension eku)
-            {
-                foreach (var oid in eku.EnhancedKeyUsages)
-                    ekuList.Add(oid.FriendlyName is { Length: > 0 } fn ? fn : oid.Value ?? "Unknown");
-            }
-        }
+        var (keyUsages, ekuList) = ExtractKuAndEkuStrings(x509);
 
         var stored = new StoredCertificate(
             Id: id,
@@ -165,8 +144,111 @@ public sealed class ForgeService : IForgeService
         return stored;
     }
 
-    public Task<StoredCertificate> ForgeFromCsrAsync(ForgeFromCsrRequest request, CancellationToken ct = default)
-        => throw new NotImplementedException("Implemented in Task 6.");
+    public async Task<StoredCertificate> ForgeFromCsrAsync(ForgeFromCsrRequest request, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var signing = request.SigningRequest;
+
+        var inspection = await _workflow.InspectCsrAsync(signing.RawCsrPem, ct).ConfigureAwait(false);
+        if (!inspection.IsValid)
+            throw new InvalidOperationException(
+                "The CSR failed re-inspection at signing time. It may have been modified after the dialog was opened.");
+
+        var issuer = _store.All.FirstOrDefault(c => c.Id == signing.SigningAuthorityId)
+            ?? throw new InvalidOperationException("Issuing root authority not found.");
+
+        if (issuer.CertificatePath is null || issuer.PrivateKeyPath is null)
+            throw new InvalidOperationException(
+                "Issuing root authority has no key files on disk. It may have been created outside SelfCertForge.");
+
+        var now = DateTimeOffset.UtcNow;
+        var id = Guid.NewGuid().ToString("N");
+        var outputDir = Path.Combine(_appDataDirectory, "certificates", id);
+        var safeName = ToSafeFileName(ExtractCnFromDn(inspection.Summary?.SubjectDistinguishedName) ?? signing.SourceCsrFilename);
+
+        var result = await _workflow.GenerateCertificateFromCsrAsync(
+            signing,
+            issuer.CertificatePath,
+            issuer.PrivateKeyPath,
+            outputDir,
+            safeName,
+            ct).ConfigureAwait(false);
+
+        var pemPath = result.CertPemPath;
+
+        var certPem = await File.ReadAllTextAsync(pemPath, ct).ConfigureAwait(false);
+        using var x509 = X509Certificate2.CreateFromPem(certPem);
+
+        var sha256 = FormatColonHex(x509.GetCertHash(HashAlgorithmName.SHA256));
+        var sha1   = FormatColonHex(x509.GetCertHash(HashAlgorithmName.SHA1));
+        var serial = FormatColonHex(x509.SerialNumberBytes.Span);
+        var algorithm = x509.SignatureAlgorithm.FriendlyName is { Length: > 0 } n ? n : "RSA";
+
+        var (keyUsages, ekuList) = ExtractKuAndEkuStrings(x509);
+
+        var sans = signing.Sans.Select(s => s.Value).ToList();
+
+        var stored = new StoredCertificate(
+            Id: id,
+            Kind: StoredCertificateKind.Child,
+            CommonName: ExtractCnFromDn(inspection.Summary?.SubjectDistinguishedName) ?? x509.GetNameInfo(X509NameType.SimpleName, false),
+            Subject: x509.Subject,
+            IssuerId: issuer.Id,
+            IssuerName: issuer.CommonName,
+            Sans: sans,
+            Algorithm: algorithm,
+            Serial: serial,
+            Sha256: sha256,
+            Sha1: sha1,
+            IssuedAt: ToUtcOffset(x509.NotBefore),
+            ExpiresAt: ToUtcOffset(x509.NotAfter),
+            InstalledInTrustStore: false,
+            CertificatePath: pemPath,
+            PrivateKeyPath: null,
+            OutputDirectory: result.OutputDirectory,
+            KeyUsages: keyUsages.Count > 0 ? keyUsages : null,
+            ExtendedKeyUsages: ekuList.Count > 0 ? ekuList : null,
+            IssuedFromCsr: true,
+            SourceCsrFilename: signing.SourceCsrFilename);
+
+        await _store.AddAsync(stored, ct).ConfigureAwait(false);
+
+        await _log.AppendAsync(new ActivityEntry(
+            Id: Guid.NewGuid().ToString("N"),
+            At: now,
+            Kind: "SignedFromCsr",
+            Message: $"Signed certificate \"{stored.CommonName}\" from CSR \"{signing.SourceCsrFilename}\" issued by {issuer.CommonName}.",
+            CertificateId: stored.Id), ct).ConfigureAwait(false);
+
+        return stored;
+    }
+
+    private static (List<string> KeyUsages, List<string> EkuList) ExtractKuAndEkuStrings(X509Certificate2 cert)
+    {
+        var ku = new List<string>();
+        var eku = new List<string>();
+        foreach (var ext in cert.Extensions)
+        {
+            if (ext is X509KeyUsageExtension keyUsageExt)
+            {
+                if (keyUsageExt.KeyUsages.HasFlag(X509KeyUsageFlags.DigitalSignature))  ku.Add("Digital Signature");
+                if (keyUsageExt.KeyUsages.HasFlag(X509KeyUsageFlags.NonRepudiation))    ku.Add("Non-Repudiation");
+                if (keyUsageExt.KeyUsages.HasFlag(X509KeyUsageFlags.KeyEncipherment))   ku.Add("Key Encipherment");
+                if (keyUsageExt.KeyUsages.HasFlag(X509KeyUsageFlags.DataEncipherment))  ku.Add("Data Encipherment");
+                if (keyUsageExt.KeyUsages.HasFlag(X509KeyUsageFlags.KeyAgreement))      ku.Add("Key Agreement");
+                if (keyUsageExt.KeyUsages.HasFlag(X509KeyUsageFlags.KeyCertSign))       ku.Add("Certificate Signing");
+                if (keyUsageExt.KeyUsages.HasFlag(X509KeyUsageFlags.CrlSign))           ku.Add("CRL Signing");
+                if (keyUsageExt.KeyUsages.HasFlag(X509KeyUsageFlags.EncipherOnly))      ku.Add("Encipher Only");
+                if (keyUsageExt.KeyUsages.HasFlag(X509KeyUsageFlags.DecipherOnly))      ku.Add("Decipher Only");
+            }
+            else if (ext is X509EnhancedKeyUsageExtension ekuExt)
+            {
+                foreach (var oid in ekuExt.EnhancedKeyUsages)
+                    eku.Add(oid.FriendlyName is { Length: > 0 } fn ? fn : oid.Value ?? "Unknown");
+            }
+        }
+        return (ku, eku);
+    }
 
     private static string BuildSubjectDn(ForgeRequest r)
     {
@@ -185,6 +267,21 @@ public sealed class ForgeService : IForgeService
         if (!string.IsNullOrWhiteSpace(r.Country))
             parts.Add($"C={r.Country.Trim().ToUpperInvariant()}");
         return string.Join(", ", parts);
+    }
+
+    /// <summary>Parses the first CN= segment from a distinguished name string, e.g. "CN=foo, O=bar" → "foo".</summary>
+    private static string? ExtractCnFromDn(string? dn)
+    {
+        if (string.IsNullOrWhiteSpace(dn)) return null;
+        const string prefix = "CN=";
+        var start = dn.IndexOf(prefix, StringComparison.OrdinalIgnoreCase);
+        if (start < 0) return null;
+        var valueStart = start + prefix.Length;
+        var end = dn.IndexOf(',', valueStart);
+        var value = end < 0
+            ? dn[valueStart..].Trim()
+            : dn[valueStart..end].Trim();
+        return value.Length > 0 ? value : null;
     }
 
     private static string ToSafeFileName(string name) =>
