@@ -52,11 +52,11 @@ public sealed class CertificatesViewModel : ObservableObject
 
         ExportKeyPemCommand = new AsyncRelayCommand(
             execute: ExportKeyPemAsync,
-            canExecute: () => HasSelection && _exportService is not null && _folderPicker is not null);
+            canExecute: () => HasSelection && SelectedRow!.HasPrivateKey && _exportService is not null && _folderPicker is not null);
 
         ExportPfxCommand = new AsyncRelayCommand(
             execute: ExportPfxAsync,
-            canExecute: () => HasSelection && _exportService is not null && _pfxPasswordDialog is not null);
+            canExecute: () => HasSelection && SelectedRow!.HasPrivateKey && _exportService is not null && _pfxPasswordDialog is not null);
 
         ExportDerCommand = new AsyncRelayCommand(
             execute: ExportDerAsync,
@@ -238,6 +238,9 @@ public sealed class CertificateRowViewModel : ObservableObject
         TrustPillKind = isTrusted ? "installed" : "uninstalled";
     }
 
+    internal CertificateRowViewModel(StoredCertificate source, bool isTrusted)
+        : this(source, "valid", isTrusted) { }
+
     internal StoredCertificate Source { get; }
 
     public string Id => Source.Id;
@@ -245,6 +248,11 @@ public sealed class CertificateRowViewModel : ObservableObject
     public string ExpirationLabel => $"Expires {Source.ExpiresAt.ToLocalTime():yyyy-MM-dd}";
     public string PillKind { get; }
     public string TrustPillKind { get; }
+    public bool IsFromCsr => Source.IssuedFromCsr;
+    public bool HasPrivateKey => !string.IsNullOrEmpty(Source.PrivateKeyPath);
+    public bool CanExportPfx => HasPrivateKey;
+    public bool CanExportKeyPem => HasPrivateKey;
+    public string? SourceCsrFilename => Source.SourceCsrFilename;
 
     public bool IsSelected
     {
