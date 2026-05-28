@@ -1,4 +1,4 @@
-namespace SelfCertForge.App.Shell;
+namespace SelfCertForge.Core.Presentation;
 
 public enum AppRoute
 {

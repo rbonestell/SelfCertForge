@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Input;
 using SelfCertForge.Core.Abstractions;
 using SelfCertForge.Core.Models;
+using SelfCertForge.Core.Validation;
 
 namespace SelfCertForge.Core.Presentation;
 
@@ -16,6 +17,9 @@ public sealed class AuthoritiesViewModel : ObservableObject
     private readonly IPfxPasswordDialog? _pfxPasswordDialog;
     private readonly IConfirmationDialog? _confirmationDialog;
     private readonly ITrustStoreChecker? _trustChecker;
+    private readonly ICreateFromCsrDialog? _createFromCsrDialog;
+    private readonly ICsrFilePicker? _csrFilePicker;
+    private readonly ICertificateWorkflowService? _workflow;
 
     private string _searchText = string.Empty;
     private AuthorityRowViewModel? _selectedRow;
@@ -30,7 +34,10 @@ public sealed class AuthoritiesViewModel : ObservableObject
         IFolderPicker folderPicker,
         IPfxPasswordDialog pfxPasswordDialog,
         IConfirmationDialog confirmationDialog,
-        ITrustStoreChecker? trustChecker = null)
+        ITrustStoreChecker? trustChecker = null,
+        ICreateFromCsrDialog? createFromCsrDialog = null,
+        ICsrFilePicker? csrFilePicker = null,
+        ICertificateWorkflowService? workflow = null)
     {
         _store = store;
         _createRootDialog = createRootDialog;
@@ -41,6 +48,9 @@ public sealed class AuthoritiesViewModel : ObservableObject
         _pfxPasswordDialog = pfxPasswordDialog;
         _confirmationDialog = confirmationDialog;
         _trustChecker = trustChecker;
+        _createFromCsrDialog = createFromCsrDialog;
+        _csrFilePicker = csrFilePicker;
+        _workflow = workflow;
         _store.Changed += (_, _) => Refresh();
         Refresh();
 
@@ -137,7 +147,11 @@ public sealed class AuthoritiesViewModel : ObservableObject
 
     public AuthorityDetailViewModel? SelectedDetail =>
         _selectedRow is null ? null
-            : new AuthorityDetailViewModel(_selectedRow.Source, _selectedRow.PillKind, _selectedRow.CreateSignedCertCommand);
+            : new AuthorityDetailViewModel(
+                _selectedRow.Source,
+                _selectedRow.PillKind,
+                _selectedRow.CreateSignedCertCommand,
+                _selectedRow.CreateFromCsrCommand);
 
     public Task LoadAsync(CancellationToken ct = default) => _store.LoadAsync(ct);
 
@@ -232,7 +246,15 @@ public sealed class AuthoritiesViewModel : ObservableObject
 
         var rows = roots
             .OrderBy(c => c.CommonName, StringComparer.OrdinalIgnoreCase)
-            .Select(c => new AuthorityRowViewModel(c, _trustChecker?.IsTrusted(c.Sha1) ?? false, _createSignedCertDialog, _nav))
+            .Select(c => new AuthorityRowViewModel(
+                c,
+                _trustChecker?.IsTrusted(c.Sha1) ?? false,
+                _createSignedCertDialog,
+                _createFromCsrDialog,
+                _csrFilePicker,
+                _workflow,
+                _confirmationDialog,
+                _nav))
             .ToList();
 
         Rows.Clear();
@@ -257,7 +279,15 @@ public sealed class AuthorityRowViewModel : ObservableObject
 {
     private bool _isSelected;
 
-    public AuthorityRowViewModel(StoredCertificate source, bool isTrusted, ICreateSignedCertDialog createSignedCertDialog, INavigationService nav)
+    public AuthorityRowViewModel(
+        StoredCertificate source,
+        bool isTrusted,
+        ICreateSignedCertDialog createSignedCertDialog,
+        ICreateFromCsrDialog? createFromCsrDialog,
+        ICsrFilePicker? csrFilePicker,
+        ICertificateWorkflowService? workflow,
+        IConfirmationDialog? confirmation,
+        INavigationService nav)
     {
         Source = source;
         Id = source.Id;
@@ -270,6 +300,31 @@ public sealed class AuthorityRowViewModel : ObservableObject
             if (cert is not null)
                 nav.NavigateToCertificate(cert.Id);
         });
+
+        CreateFromCsrCommand = new AsyncRelayCommand(async () =>
+        {
+            if (csrFilePicker is null || workflow is null || createFromCsrDialog is null) return;
+
+            var pick = await csrFilePicker.PickCsrFileAsync();
+            if (pick is null) return;
+
+            var inspection = await workflow.InspectCsrAsync(pick.Contents);
+            if (!inspection.IsValid || inspection.Summary is null)
+            {
+                if (confirmation is not null)
+                    await confirmation.ShowAsync(
+                        title: "Invalid Certificate Signing Request",
+                        message: CsrValidationErrorMessages.Format(inspection.Errors),
+                        confirmLabel: "OK",
+                        cancelLabel: "OK");
+                return;
+            }
+
+            var filename = Path.GetFileName(pick.FilePath);
+            var cert = await createFromCsrDialog.ShowAsync(source.Id, source.CommonName, inspection.Summary, filename);
+            if (cert is not null)
+                await nav.NavigateToAsync(AppRoute.Certificates);
+        });
     }
 
     internal StoredCertificate Source { get; }
@@ -280,6 +335,7 @@ public sealed class AuthorityRowViewModel : ObservableObject
     public string ExpirationLabel => $"Expires {Source.ExpiresAt.ToLocalTime():yyyy-MM-dd}";
     public string PillLabel { get; }
     public ICommand CreateSignedCertCommand { get; }
+    public ICommand CreateFromCsrCommand { get; }
 
     public bool IsSelected
     {
@@ -299,7 +355,11 @@ public sealed class AuthorityRowViewModel : ObservableObject
 
 public sealed class AuthorityDetailViewModel
 {
-    internal AuthorityDetailViewModel(StoredCertificate source, string pillKind, ICommand createSignedCertCommand)
+    internal AuthorityDetailViewModel(
+        StoredCertificate source,
+        string pillKind,
+        ICommand createSignedCertCommand,
+        ICommand createFromCsrCommand)
     {
         CommonName = source.CommonName;
         Subject = source.Subject;
@@ -317,6 +377,7 @@ public sealed class AuthorityDetailViewModel
             _             => pillKind,
         };
         CreateSignedCertCommand = createSignedCertCommand;
+        CreateFromCsrCommand = createFromCsrCommand;
     }
 
     public string CommonName { get; }
@@ -330,4 +391,5 @@ public sealed class AuthorityDetailViewModel
     public string PillKind { get; }
     public string PillLabel { get; }
     public ICommand CreateSignedCertCommand { get; }
+    public ICommand CreateFromCsrCommand { get; }
 }

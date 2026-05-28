@@ -96,6 +96,7 @@ public sealed class AuthoritiesViewModelTests
     private sealed class NoOpNavigationService : INavigationService
     {
         public void NavigateToCertificate(string certId) { }
+        public Task NavigateToAsync(AppRoute route, CancellationToken ct = default) => Task.CompletedTask;
     }
 
     private sealed class NoOpExportService : ICertificateExportService

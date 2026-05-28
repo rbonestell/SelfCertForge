@@ -20,4 +20,10 @@ public sealed class NavigationService : INavigationService
         _shell.CurrentRoute = AppRoute.Certificates;
         _certificates.SelectById(certId);
     }
+
+    public Task NavigateToAsync(AppRoute route, CancellationToken ct = default)
+    {
+        _shell.CurrentRoute = route;
+        return Task.CompletedTask;
+    }
 }
