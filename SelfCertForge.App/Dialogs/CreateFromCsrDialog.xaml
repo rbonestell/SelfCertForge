@@ -108,14 +108,76 @@
                         <Label Text="Subject Alt Names"
                                FontFamily="InterRegular" FontSize="15" TextColor="{StaticResource ColorTextSecondary}" />
 
-                        <!-- Add row: value entry + add button -->
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                            <Border Grid.Column="0" BackgroundColor="{StaticResource ColorSurface}"
+                        <!-- Add row: DNS/IP toggle + value entry + add button -->
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+
+                            <!-- DNS / IP toggle -->
+                            <Grid Grid.Column="0" ColumnDefinitions="*,*" ColumnSpacing="0"
+                                  IsEnabled="{Binding IsCreating, Converter={StaticResource InverseBool}}">
+                                <Border Grid.Column="0" BackgroundColor="Transparent"
+                                        Stroke="{StaticResource ColorBorderSubtle}"
+                                        StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                                        HeightRequest="40" WidthRequest="52">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding NewSanType}" Value="DNS">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                                            <Setter Property="Stroke" Value="{StaticResource ColorAccentPrimary}" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnSanTypeDns" />
+                                    </Border.GestureRecognizers>
+                                    <Label Text="DNS" FontFamily="JetBrainsMono" FontSize="13"
+                                           HorizontalOptions="Center" VerticalOptions="Center">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding NewSanType}" Value="DNS">
+                                                <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
+                                            </DataTrigger>
+                                            <DataTrigger TargetType="Label" Binding="{Binding NewSanType}" Value="IP">
+                                                <Setter Property="TextColor" Value="{StaticResource ColorTextMuted}" />
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                </Border>
+                                <Border Grid.Column="1" BackgroundColor="Transparent"
+                                        Stroke="{StaticResource ColorBorderSubtle}"
+                                        StrokeThickness="1" StrokeShape="RoundRectangle 8"
+                                        HeightRequest="40" WidthRequest="44">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding NewSanType}" Value="IP">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource ColorPanel}" />
+                                            <Setter Property="Stroke" Value="{StaticResource ColorAccentPrimary}" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnSanTypeIp" />
+                                    </Border.GestureRecognizers>
+                                    <Label Text="IP" FontFamily="JetBrainsMono" FontSize="13"
+                                           HorizontalOptions="Center" VerticalOptions="Center">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding NewSanType}" Value="IP">
+                                                <Setter Property="TextColor" Value="{StaticResource ColorTextPrimary}" />
+                                            </DataTrigger>
+                                            <DataTrigger TargetType="Label" Binding="{Binding NewSanType}" Value="DNS">
+                                                <Setter Property="TextColor" Value="{StaticResource ColorTextMuted}" />
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                </Border>
+                            </Grid>
+
+                            <!-- Value entry. Border flips to ColorDanger when SAN validation fails. -->
+                            <Border Grid.Column="1" BackgroundColor="{StaticResource ColorSurface}"
                                     Stroke="{StaticResource ColorBorderSubtle}"
                                     StrokeThickness="1" StrokeShape="RoundRectangle 8"
                                     Padding="12,0" HeightRequest="40">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding HasSanValidationError}" Value="True">
+                                        <Setter Property="Stroke" Value="{StaticResource ColorDanger}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
                                 <Entry Text="{Binding NewSanValue, Mode=TwoWay}"
-                                       Placeholder="dns:api.local or ip:10.0.0.1"
+                                       Placeholder="{Binding NewSanPlaceholder}"
                                        IsEnabled="{Binding IsCreating, Converter={StaticResource InverseBool}}"
                                        FontFamily="JetBrainsMono" FontSize="15"
                                        TextColor="{StaticResource ColorTextPrimary}"
@@ -124,7 +186,7 @@
                             </Border>
 
                             <!-- Add button -->
-                            <Button Grid.Column="1" Text="Add"
+                            <Button Grid.Column="2" Text="Add"
                                     Command="{Binding AddSanCommand}"
                                     IsEnabled="{Binding IsCreating, Converter={StaticResource InverseBool}}"
                                     FontFamily="InterSemiBold" FontSize="14"
@@ -135,22 +197,40 @@
                                     HeightRequest="40" Padding="14,0" />
                         </Grid>
 
+                        <!-- SAN validation error -->
+                        <Label Text="{Binding SanValidationError}"
+                               FontFamily="InterRegular" FontSize="13"
+                               TextColor="{StaticResource ColorDanger}"
+                               IsVisible="{Binding HasSanValidationError}" />
+
                         <!-- SAN list -->
                         <VerticalStackLayout BindableLayout.ItemsSource="{Binding SanEntries}"
                                              Spacing="4">
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="vm:CsrSanOriginRowViewModel">
-                                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8"
+                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8"
                                           BackgroundColor="{StaticResource ColorSurface}"
                                           Padding="10,7">
-                                        <Label Grid.Column="0"
+                                        <!-- Type tag (DNS/IP) -->
+                                        <Border Grid.Column="0"
+                                                BackgroundColor="{StaticResource ColorPanel}"
+                                                Stroke="{StaticResource ColorBorderSubtle}"
+                                                StrokeThickness="1"
+                                                StrokeShape="RoundRectangle 4"
+                                                Padding="6,2">
+                                            <Label Text="{Binding Type}"
+                                                   FontFamily="JetBrainsMono" FontSize="12"
+                                                   TextColor="{StaticResource ColorTextMuted}"
+                                                   VerticalOptions="Center" />
+                                        </Border>
+                                        <Label Grid.Column="1"
                                                Text="{Binding Value}"
                                                FontFamily="JetBrainsMono" FontSize="14"
                                                TextColor="{StaticResource ColorTextPrimary}"
                                                VerticalOptions="Center"
                                                LineBreakMode="TailTruncation" />
                                         <!-- Origin tag -->
-                                        <Border Grid.Column="1"
+                                        <Border Grid.Column="2"
                                                 BackgroundColor="{StaticResource ColorPanel}"
                                                 Stroke="{StaticResource ColorBorderSubtle}"
                                                 StrokeThickness="1"
@@ -162,7 +242,7 @@
                                                    VerticalOptions="Center" />
                                         </Border>
                                         <!-- Remove button -->
-                                        <Border Grid.Column="2"
+                                        <Border Grid.Column="3"
                                                 BackgroundColor="Transparent"
                                                 Stroke="Transparent" StrokeThickness="0"
                                                 Padding="6,4">

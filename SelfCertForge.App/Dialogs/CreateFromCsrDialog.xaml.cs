@@ -52,6 +52,9 @@ public partial class CreateFromCsrDialog : ContentPage
     private void OnEkuEmailProtectionTapped(object? sender, TappedEventArgs e) =>
         _viewModel.EkuEmailProtection = !_viewModel.EkuEmailProtection;
 
+    private void OnSanTypeDns(object? sender, TappedEventArgs e) => _viewModel.NewSanType = "DNS";
+    private void OnSanTypeIp(object? sender, TappedEventArgs e) => _viewModel.NewSanType = "IP";
+
     private void OnHashSha256(object? sender, EventArgs e) =>
         _viewModel.HashAlgorithm = HashAlgorithmKind.Sha256;
     private void OnHashSha384(object? sender, EventArgs e) =>

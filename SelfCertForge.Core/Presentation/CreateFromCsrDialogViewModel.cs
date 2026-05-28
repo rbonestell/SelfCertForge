@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Input;
 using SelfCertForge.Core.Abstractions;
 using SelfCertForge.Core.Models;
+using SelfCertForge.Core.Validation;
 
 namespace SelfCertForge.Core.Presentation;
 
@@ -22,6 +23,8 @@ public sealed class CreateFromCsrDialogViewModel : ObservableObject
     private bool _isCreating;
     private string? _errorMessage;
     private string _newSanValue = string.Empty;
+    private string _newSanType = "DNS";
+    private string? _sanValidationError;
 
     private bool _isKuLocked;
     private bool _isEkuLocked;
@@ -63,8 +66,45 @@ public sealed class CreateFromCsrDialogViewModel : ObservableObject
     public string NewSanValue
     {
         get => _newSanValue;
-        set { if (SetProperty(ref _newSanValue, value)) (AddSanCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
+        set
+        {
+            if (SetProperty(ref _newSanValue, value))
+            {
+                SanValidationError = null;
+                (AddSanCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            }
+        }
     }
+
+    public string NewSanType
+    {
+        get => _newSanType;
+        set
+        {
+            if (SetProperty(ref _newSanType, value))
+            {
+                SanValidationError = null;
+                OnPropertyChanged(nameof(NewSanPlaceholder));
+            }
+        }
+    }
+
+    public string NewSanPlaceholder =>
+        string.Equals(_newSanType, "IP", StringComparison.OrdinalIgnoreCase)
+            ? "10.0.0.1"
+            : "api.example.local";
+
+    public string? SanValidationError
+    {
+        get => _sanValidationError;
+        private set
+        {
+            if (SetProperty(ref _sanValidationError, value))
+                OnPropertyChanged(nameof(HasSanValidationError));
+        }
+    }
+
+    public bool HasSanValidationError => !string.IsNullOrEmpty(_sanValidationError);
 
     public bool IsKeyUsageLocked { get => _isKuLocked; private set => SetProperty(ref _isKuLocked, value); }
     public bool IsEkuLocked { get => _isEkuLocked; private set => SetProperty(ref _isEkuLocked, value); }
@@ -104,9 +144,19 @@ public sealed class CreateFromCsrDialogViewModel : ObservableObject
         SourceCsrFilename = sourceCsrFilename;
         ValidityDays = _preferences?.Current.SignedValidityDays ?? 397;
 
+        var cn = TryExtractCommonName(summary.SubjectDistinguishedName);
+
         SanEntries.Clear();
         foreach (var s in summary.RequestedSans)
-            SanEntries.Add(new CsrSanOriginRowViewModel(s, CsrSignedSanOrigin.FromCsr, RemoveSan));
+        {
+            var (type, value) = ParseSan(s);
+            // Don't surface the Subject CN as a duplicate SAN entry —
+            // it lives on the cert as the Subject already and operators
+            // expect SANs to be the *additional* names.
+            if (cn is not null && string.Equals(value, cn, StringComparison.OrdinalIgnoreCase))
+                continue;
+            SanEntries.Add(new CsrSanOriginRowViewModel(type, value, CsrSignedSanOrigin.FromCsr, RemoveSan));
+        }
 
         if (summary.RequestedKeyUsage is { } ku)
         {
@@ -123,7 +173,12 @@ public sealed class CreateFromCsrDialogViewModel : ObservableObject
         {
             IsKeyUsageLocked = false;
             _kuDigitalSignature = true;
+            _kuNonRepudiation = false;
             _kuKeyEncipherment = true;
+            _kuDataEncipherment = false;
+            _kuKeyAgreement = false;
+            _kuKeyCertSign = false;
+            _kuCrlSign = false;
         }
 
         if (summary.RequestedEkus is { } e)
@@ -138,17 +193,59 @@ public sealed class CreateFromCsrDialogViewModel : ObservableObject
         else
         {
             IsEkuLocked = false;
+            _ekuServerAuth = false;
+            _ekuClientAuth = false;
+            _ekuCodeSigning = false;
+            _ekuTimeStamping = false;
+            _ekuEmailProtection = false;
         }
 
+        NewSanType = "DNS";
+        NewSanValue = string.Empty;
+        SanValidationError = null;
+
         Notify();
+    }
+
+    private static (string Type, string Value) ParseSan(string raw)
+    {
+        if (raw.StartsWith("IP:", StringComparison.OrdinalIgnoreCase))
+            return ("IP", raw[3..]);
+        if (raw.StartsWith("DNS:", StringComparison.OrdinalIgnoreCase))
+            return ("DNS", raw[4..]);
+        return ("DNS", raw);
+    }
+
+    private static string? TryExtractCommonName(string distinguishedName)
+    {
+        if (string.IsNullOrWhiteSpace(distinguishedName)) return null;
+        // Distinguished names are comma-separated RDN=value pairs.
+        // Take the first CN= we see; values may be quoted.
+        foreach (var part in distinguishedName.Split(','))
+        {
+            var trimmed = part.TrimStart();
+            if (trimmed.StartsWith("CN=", StringComparison.OrdinalIgnoreCase))
+            {
+                var v = trimmed[3..].Trim();
+                if (v.Length >= 2 && v[0] == '"' && v[^1] == '"') v = v[1..^1];
+                return v;
+            }
+        }
+        return null;
     }
 
     private void AddSan()
     {
         var v = _newSanValue.Trim();
-        if (string.IsNullOrEmpty(v)) return;
-        SanEntries.Add(new CsrSanOriginRowViewModel(v, CsrSignedSanOrigin.AddedByOperator, RemoveSan));
+        var result = SanRules.Validate(_newSanType, v);
+        if (!result.IsValid)
+        {
+            SanValidationError = result.Error;
+            return;
+        }
+        SanEntries.Add(new CsrSanOriginRowViewModel(_newSanType, v, CsrSignedSanOrigin.AddedByOperator, RemoveSan));
         NewSanValue = string.Empty;
+        SanValidationError = null;
     }
 
     private void RemoveSan(CsrSanOriginRowViewModel row) => SanEntries.Remove(row);
@@ -167,7 +264,7 @@ public sealed class CreateFromCsrDialogViewModel : ObservableObject
                 RawCsrPem: _rawCsrPem,
                 SourceCsrFilename: _sourceCsrFilename,
                 ValidityDays: _validityDays,
-                Sans: SanEntries.Select(r => new CsrSignedSanEntry(r.Value, r.Origin)).ToArray(),
+                Sans: SanEntries.Select(SerializeSan).ToArray(),
                 KeyUsageDigitalSignature: _kuDigitalSignature,
                 KeyUsageNonRepudiation: _kuNonRepudiation,
                 KeyUsageKeyEncipherment: _kuKeyEncipherment,
@@ -196,9 +293,32 @@ public sealed class CreateFromCsrDialogViewModel : ObservableObject
         }
     }
 
+    private static CsrSignedSanEntry SerializeSan(CsrSanOriginRowViewModel row)
+    {
+        // Workflow service routes SAN values by an "IP:" prefix; bare values are DNS.
+        var value = string.Equals(row.Type, "IP", StringComparison.OrdinalIgnoreCase)
+            ? "IP:" + row.Value
+            : row.Value;
+        return new CsrSignedSanEntry(value, row.Origin);
+    }
+
     private void Notify()
     {
         OnPropertyChanged(nameof(CanSubmit));
+        OnPropertyChanged(nameof(IsKeyUsageLocked));
+        OnPropertyChanged(nameof(IsEkuLocked));
+        OnPropertyChanged(nameof(KeyUsageDigitalSignature));
+        OnPropertyChanged(nameof(KeyUsageNonRepudiation));
+        OnPropertyChanged(nameof(KeyUsageKeyEncipherment));
+        OnPropertyChanged(nameof(KeyUsageDataEncipherment));
+        OnPropertyChanged(nameof(KeyUsageKeyAgreement));
+        OnPropertyChanged(nameof(KeyUsageKeyCertSign));
+        OnPropertyChanged(nameof(KeyUsageCrlSign));
+        OnPropertyChanged(nameof(EkuServerAuth));
+        OnPropertyChanged(nameof(EkuClientAuth));
+        OnPropertyChanged(nameof(EkuCodeSigning));
+        OnPropertyChanged(nameof(EkuTimeStamping));
+        OnPropertyChanged(nameof(EkuEmailProtection));
         (SubmitCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
         (AddSanCommand as RelayCommand)?.RaiseCanExecuteChanged();
     }
