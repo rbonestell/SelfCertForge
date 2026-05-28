@@ -317,7 +317,102 @@ public sealed class DotNetCryptoCertificateWorkflowService : ICertificateWorkflo
         string outputDirectory,
         string outputFileBaseName,
         CancellationToken cancellationToken = default)
-        => throw new NotImplementedException("Implemented in Task 5.");
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        Directory.CreateDirectory(outputDirectory);
+        var safeName = RequireSafeToken(outputFileBaseName, "Output file name");
+
+        var csrReq = CertificateRequest.LoadSigningRequestPem(
+            request.RawCsrPem,
+            ToHashName(request.SignatureHashAlgorithm),
+            CertificateRequestLoadOptions.UnsafeLoadCertificateExtensions);
+
+        using var issuerCert = X509Certificate2.CreateFromPem(File.ReadAllText(issuerCertificatePath));
+        using var issuerKey = RSA.Create();
+        issuerKey.ImportFromPem(File.ReadAllText(issuerPrivateKeyPath));
+
+        // Strip CSR-supplied extensions; we apply operator-chosen ones explicitly.
+        csrReq.CertificateExtensions.Clear();
+
+        csrReq.CertificateExtensions.Add(
+            new X509BasicConstraintsExtension(false, false, 0, critical: true));
+
+        csrReq.CertificateExtensions.Add(
+            new X509SubjectKeyIdentifierExtension(csrReq.PublicKey, critical: false));
+
+        csrReq.CertificateExtensions.Add(
+            X509AuthorityKeyIdentifierExtension.CreateFromCertificate(
+                issuerCert,
+                includeKeyIdentifier: true,
+                includeIssuerAndSerial: false));
+
+        var kuFlags = BuildCsrKeyUsageFlags(request);
+        if (kuFlags != X509KeyUsageFlags.None)
+            csrReq.CertificateExtensions.Add(new X509KeyUsageExtension(kuFlags, critical: true));
+
+        var ekuOids = BuildCsrEkuOids(request);
+        if (ekuOids.Count > 0)
+            csrReq.CertificateExtensions.Add(new X509EnhancedKeyUsageExtension(ekuOids, critical: false));
+
+        var sans = request.Sans.Select(s => s.Value).Distinct().ToList();
+        if (sans.Count > 0)
+        {
+            var sanBuilder = new SubjectAlternativeNameBuilder();
+            foreach (var s in sans) sanBuilder.AddDnsName(s);
+            csrReq.CertificateExtensions.Add(sanBuilder.Build(critical: false));
+        }
+
+        var notBefore = DateTimeOffset.UtcNow.AddSeconds(-5);
+        var notAfter = notBefore.AddDays(request.ValidityDays);
+
+        var serial = new byte[16];
+        RandomNumberGenerator.Fill(serial);
+
+        using var issued = csrReq.Create(
+            issuerCert.SubjectName,
+            X509SignatureGenerator.CreateForRSA(issuerKey, RSASignaturePadding.Pkcs1),
+            notBefore,
+            notAfter,
+            serial);
+
+        var pemPath = Path.Combine(outputDirectory, $"{safeName}.pem");
+        var crtPath = Path.Combine(outputDirectory, $"{safeName}.crt");
+        File.WriteAllText(pemPath, issued.ExportCertificatePem());
+        File.WriteAllBytes(crtPath, issued.Export(X509ContentType.Cert));
+
+        return Task.FromResult(new CertificateGenerationResult
+        {
+            OutputDirectory = outputDirectory,
+            GeneratedFiles = [pemPath, crtPath],
+            CertPemPath = pemPath,
+            KeyPath = null,
+        });
+    }
+
+    private static X509KeyUsageFlags BuildCsrKeyUsageFlags(CsrSigningRequest r)
+    {
+        var f = X509KeyUsageFlags.None;
+        if (r.KeyUsageDigitalSignature) f |= X509KeyUsageFlags.DigitalSignature;
+        if (r.KeyUsageNonRepudiation)   f |= X509KeyUsageFlags.NonRepudiation;
+        if (r.KeyUsageKeyEncipherment)  f |= X509KeyUsageFlags.KeyEncipherment;
+        if (r.KeyUsageDataEncipherment) f |= X509KeyUsageFlags.DataEncipherment;
+        if (r.KeyUsageKeyAgreement)     f |= X509KeyUsageFlags.KeyAgreement;
+        if (r.KeyUsageKeyCertSign)      f |= X509KeyUsageFlags.KeyCertSign;
+        if (r.KeyUsageCrlSign)          f |= X509KeyUsageFlags.CrlSign;
+        return f;
+    }
+
+    private static OidCollection BuildCsrEkuOids(CsrSigningRequest r)
+    {
+        var oids = new OidCollection();
+        if (r.EkuServerAuth)   oids.Add(new Oid("1.3.6.1.5.5.7.3.1"));
+        if (r.EkuClientAuth)   oids.Add(new Oid("1.3.6.1.5.5.7.3.2"));
+        if (r.EkuCodeSigning)  oids.Add(new Oid("1.3.6.1.5.5.7.3.3"));
+        if (r.EkuTimeStamping) oids.Add(new Oid("1.3.6.1.5.5.7.3.8"));
+        return oids;
+    }
 
     private static void ValidateSourceContract(SignedCertificateRequest request)
     {

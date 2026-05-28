@@ -255,7 +255,7 @@ public sealed class DotNetCryptoCertificateWorkflowServiceValidationTests : IDis
 
     // ── DotNet-service-specific tests (require real cert generation) ──────────────────────────
 
-    private async Task<(string certPemPath, string keyPath)> GenerateRootAsync(string rootName = "testRoot")
+    private async Task<(string certPemPath, string? keyPath)> GenerateRootAsync(string rootName = "testRoot")
     {
         var result = await _service.GenerateRootCertificateAsync(new RootCertificateRequest
         {
@@ -269,7 +269,7 @@ public sealed class DotNetCryptoCertificateWorkflowServiceValidationTests : IDis
     private async Task<CertificateGenerationResult> GenerateSignedAsync(
         string certName,
         string rootCertPath,
-        string rootKeyPath,
+        string? rootKeyPath,
         Action<SignedCertificateRequest>? configure = null)
     {
         var request = new SignedCertificateRequest
@@ -278,7 +278,7 @@ public sealed class DotNetCryptoCertificateWorkflowServiceValidationTests : IDis
             CertificateName = certName,
             OutputDirectory = _workingDirectory,
             RootCertificatePath = rootCertPath,
-            RootPrivateKeyPath = rootKeyPath,
+            RootPrivateKeyPath = rootKeyPath!,
             SubjectDn = $"CN={certName}.local"
         };
         configure?.Invoke(request);
@@ -351,7 +351,7 @@ public sealed class DotNetCryptoCertificateWorkflowServiceValidationTests : IDis
             req.ReuseExistingDeviceKey = false;
         });
 
-        var originalKeyBytes = await File.ReadAllBytesAsync(result1.KeyPath);
+        var originalKeyBytes = await File.ReadAllBytesAsync(result1.KeyPath!);
 
         // Second generation — should reuse the existing key
         var result2 = await GenerateSignedAsync("leaf-reuse", rootCertPath, rootKeyPath, req =>
@@ -359,7 +359,7 @@ public sealed class DotNetCryptoCertificateWorkflowServiceValidationTests : IDis
             req.ReuseExistingDeviceKey = true;
         });
 
-        var reusedKeyBytes = await File.ReadAllBytesAsync(result2.KeyPath);
+        var reusedKeyBytes = await File.ReadAllBytesAsync(result2.KeyPath!);
 
         reusedKeyBytes.Should().Equal(originalKeyBytes);
     }
