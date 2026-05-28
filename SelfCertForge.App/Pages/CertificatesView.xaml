@@ -177,7 +177,7 @@
                                     <controls:StatusPill Kind="{Binding TrustPillKind}"
                                                          Label="{Binding TrustPillLabel}" />
                                     <Border IsVisible="{Binding IsFromCsr}"
-                                            BackgroundColor="{StaticResource ColorAccentMuted}"
+                                            BackgroundColor="{StaticResource ColorAccentPrimaryDeep}"
                                             StrokeShape="RoundRectangle 6"
                                             Stroke="{StaticResource Transparent}"
                                             StrokeThickness="0"
