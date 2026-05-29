@@ -532,11 +532,6 @@
                                        MaxLines="3"
                                        IsVisible="{Binding AvailableUpdate.ReleaseNotes, Converter={StaticResource NotNullToBool}}" />
 
-                                <!-- Download progress -->
-                                <ProgressBar Progress="{Binding DownloadProgressNormalized}"
-                                             ProgressColor="{StaticResource ColorAccentPrimary}"
-                                             IsVisible="{Binding IsDownloading}"
-                                             HeightRequest="3" />
                             </VerticalStackLayout>
                         </Border>
 
