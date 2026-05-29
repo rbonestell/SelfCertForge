@@ -100,6 +100,20 @@ public sealed class CreateRootDialogViewModelTests
         raised.Should().Be(cert);
     }
 
+    [Fact]
+    public void Submit_RunsForgeThroughOverlay_WithCaption()
+    {
+        var overlay = new FakeLoadingOverlay();
+        var vm = new CreateRootDialogViewModel(new FakeForgeService(_ => FakeCert()), preferences: null, overlay: overlay)
+        {
+            CommonName = "Test Root CA"
+        };
+
+        ((System.Windows.Input.ICommand)vm.CreateCommand).Execute(null);
+
+        overlay.Messages.Should().ContainSingle().Which.Should().Be("Forging Root Certificate…");
+    }
+
     private static StoredCertificate FakeCert(string id = "c1") => new(
         Id: id, Kind: StoredCertificateKind.Root, CommonName: "Test",
         Subject: "CN=Test", IssuerId: null, IssuerName: null,

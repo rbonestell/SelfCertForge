@@ -8,6 +8,7 @@ public sealed class CreateRootDialogViewModel : ObservableObject
 {
     private readonly IForgeService _forge;
     private readonly IUserPreferencesStore? _preferences;
+    private readonly ILoadingOverlay? _overlay;
 
     private string _commonName = string.Empty;
     private string _emailAddress = string.Empty;
@@ -27,10 +28,11 @@ public sealed class CreateRootDialogViewModel : ObservableObject
     public CreateRootDialogViewModel(IForgeService forge)
         : this(forge, null) { }
 
-    public CreateRootDialogViewModel(IForgeService forge, IUserPreferencesStore? preferences)
+    public CreateRootDialogViewModel(IForgeService forge, IUserPreferencesStore? preferences, ILoadingOverlay? overlay = null)
     {
         _forge = forge;
         _preferences = preferences;
+        _overlay = overlay;
         CreateCommand = new AsyncRelayCommand(SubmitAsync, () => CanSubmit);
         CancelCommand = new RelayCommand(() => CancelRequested?.Invoke(this, EventArgs.Empty));
         // Seed defaults from prefs so a fresh dialog starts with the user's saved values.
@@ -193,7 +195,7 @@ public sealed class CreateRootDialogViewModel : ObservableObject
         try
         {
             var cn = _commonName.Trim();
-            var stored = await _forge.ForgeAsync(new ForgeRequest(
+            var request = new ForgeRequest(
                 Mode: ForgeMode.Root,
                 CommonName: cn,
                 ValidityDays: _validityDays,
@@ -207,7 +209,9 @@ public sealed class CreateRootDialogViewModel : ObservableObject
                 Locality: NullIfBlank(_locality),
                 StateOrProvince: NullIfBlank(_stateOrProvince),
                 Country: NullIfBlank(_country),
-                HashAlgorithm: _hashAlgorithm));
+                HashAlgorithm: _hashAlgorithm);
+            var forge = _forge;
+            var stored = await _overlay.RunOrDirectAsync("Forging Root Certificate…", () => forge.ForgeAsync(request));
             Created?.Invoke(this, stored);
             IsCreating = false;
         }
