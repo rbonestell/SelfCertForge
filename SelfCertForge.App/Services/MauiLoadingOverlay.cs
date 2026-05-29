@@ -63,21 +63,21 @@ public sealed class MauiLoadingOverlay : ILoadingOverlay
 
         await MainThread.InvokeOnMainThreadAsync(() =>
         {
-            lock (_gate)
-            {
-                if (_depth == 0 || _content is not null)
-                    return;
-            }
-
             var page = Application.Current?.Windows is { Count: > 0 } windows
                 ? windows[0].Page
                 : null;
             if (page is null)
                 return;
 
-            _hostPage = page;
-            _content = new LoadingOverlayContent { Message = _message };
-            _shownAtUtc = DateTime.UtcNow;
+            lock (_gate)
+            {
+                if (_depth == 0 || _content is not null)
+                    return;
+
+                _hostPage = page;
+                _content = new LoadingOverlayContent { Message = _message };
+                _shownAtUtc = DateTime.UtcNow;
+            }
 
             _ = page.ShowPopupAsync(_content, new PopupOptions
             {
@@ -125,9 +125,15 @@ public sealed class MauiLoadingOverlay : ILoadingOverlay
 
             if (_content is not null && _hostPage is not null)
             {
-                await _hostPage.ClosePopupAsync();
-                _content = null;
-                _hostPage = null;
+                try
+                {
+                    await _hostPage.ClosePopupAsync();
+                }
+                finally
+                {
+                    _content = null;
+                    _hostPage = null;
+                }
             }
         });
     }
