@@ -1,19 +1,13 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-    <!-- See https://aka.ms/maui-publish-app-store#add-entitlements for more information about adding entitlements.-->
+    <!-- See https://aka.ms/maui-publish-app-store#add-entitlements for more information about adding entitlements.
+         App Sandbox is intentionally NOT enabled so dev (`make run`) shares the same
+         ~/Library data root as the signed release (which also ships unsandboxed).
+         With the sandbox on, MAUI's FileSystem.AppDataDirectory resolved to
+         ~/Library/Containers/<bundle-id>/Data/Library and dev couldn't see the
+         release's certificates.json / activity.json / certificates/ folder. -->
     <dict>
-        <!-- App Sandbox must be enabled to distribute a MacCatalyst app through the Mac App Store. -->
-        <key>com.apple.security.app-sandbox</key>
-        <true/>
-        <!-- When App Sandbox is enabled, this value is required to open outgoing network connections. -->
-        <key>com.apple.security.network.client</key>
-        <true/>
-        <!-- Required for UIDocumentPickerViewController to read and write user-selected files/folders under App Sandbox. -->
-        <key>com.apple.security.files.user-selected.read-write</key>
-        <true/>
-        <key>com.apple.security.files.bookmarks.app-scope</key>
-        <true/>
     </dict>
 </plist>
 
