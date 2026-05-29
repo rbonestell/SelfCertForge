@@ -14,15 +14,14 @@
             HorizontalOptions="Center"
             VerticalOptions="Center">
         <VerticalStackLayout Spacing="20" HorizontalOptions="Center">
-            <!-- Brand mark, pulsed natively in code-behind. (We avoid Lottie here:
-                 the SVGator Lottie export contained only the vendor watermark, not
-                 the raster brand art.) -->
-            <Image x:Name="Mark"
-                   Source="brand_mark.png"
-                   Aspect="AspectFit"
-                   WidthRequest="96"
-                   HeightRequest="96"
-                   HorizontalOptions="Center" />
+            <!-- The hammer-swing animation is a JS-driven SVG (SVGator), which MAUI
+                 can't render natively, so we host it in a WebView. Its HTML uses the
+                 card surface color as the page background, so there's no transparency
+                 seam and no white flash around the animation. -->
+            <Grid WidthRequest="140" HeightRequest="140" HorizontalOptions="Center">
+                <WebView x:Name="Anim"
+                         BackgroundColor="{StaticResource ColorPanelElevated}" />
+            </Grid>
             <Label x:Name="MessageLabel"
                    FontFamily="InterSemiBold"
                    FontSize="18"

@@ -4,23 +4,41 @@ namespace SelfCertForge.App.Controls;
 
 public partial class LoadingOverlayContent : Popup
 {
-    private const string PulseHandle = "LoadingPulse";
+    // Built once from the bundled SVG and reused for every popup (the SVG is ~2.4 MB).
+    private static string? _cachedHtml;
 
     public LoadingOverlayContent()
     {
         InitializeComponent();
-        Mark.Loaded += (_, _) => StartPulse();
-        Mark.Unloaded += (_, _) => Mark.AbortAnimation(PulseHandle);
+        _ = LoadAnimationAsync();
     }
 
-    // Gentle scale pulse so the brand mark reads as "working" without implying a
-    // spinner. Loops until the view leaves the tree (popup dismissed/closed).
-    private void StartPulse()
+    private async Task LoadAnimationAsync()
     {
-        var pulse = new Animation();
-        pulse.Add(0.0, 0.5, new Animation(v => Mark.Scale = v, 0.92, 1.06, Easing.SinInOut));
-        pulse.Add(0.5, 1.0, new Animation(v => Mark.Scale = v, 1.06, 0.92, Easing.SinInOut));
-        pulse.Commit(Mark, PulseHandle, length: 1200, repeat: () => true);
+        var html = await GetHtmlAsync();
+        await MainThread.InvokeOnMainThreadAsync(() =>
+            Anim.Source = new HtmlWebViewSource { Html = html });
+    }
+
+    private static async Task<string> GetHtmlAsync()
+    {
+        if (_cachedHtml is not null)
+            return _cachedHtml;
+
+        using var stream = await FileSystem.OpenAppPackageFileAsync("loading.svg");
+        using var reader = new StreamReader(stream);
+        var svg = await reader.ReadToEndAsync();
+
+        // #232631 == ColorPanelElevated (the card surface) so the WebView blends in.
+        _cachedHtml =
+            "<!DOCTYPE html><html><head>" +
+            "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">" +
+            "<style>html,body{margin:0;padding:0;height:100%;background:#232631;overflow:hidden}" +
+            "svg{width:100%;height:100%;display:block}</style></head><body>" +
+            svg +
+            "</body></html>";
+
+        return _cachedHtml;
     }
 
     private string _message = string.Empty;
