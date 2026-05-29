@@ -487,7 +487,7 @@
                             </Grid>
                         </VerticalStackLayout>
 
-                        <!-- Update available — version, optional notes, primary CTA, progress -->
+                        <!-- Update available — version, optional notes, primary CTA -->
                         <Border BackgroundColor="{StaticResource ColorPanelElevated}"
                                 Stroke="{StaticResource ColorBorderSubtle}"
                                 StrokeThickness="1"
@@ -532,11 +532,6 @@
                                        MaxLines="3"
                                        IsVisible="{Binding AvailableUpdate.ReleaseNotes, Converter={StaticResource NotNullToBool}}" />
 
-                                <!-- Download progress -->
-                                <ProgressBar Progress="{Binding DownloadProgressNormalized}"
-                                             ProgressColor="{StaticResource ColorAccentPrimary}"
-                                             IsVisible="{Binding IsDownloading}"
-                                             HeightRequest="3" />
                             </VerticalStackLayout>
                         </Border>
 
@@ -578,10 +573,10 @@
                             </Grid>
                         </Border>
 
-                        <!-- Status message: surfaces the result of the most recent
+                        <!-- Status message: surfaces the outcome of the most recent
                              check ("You're on the latest version.", "Update check failed.",
-                             progress strings during download). Previously set by the VM
-                             but never bound — leaving the user with no feedback. -->
+                             "Download failed."). In-progress download/install state is
+                             shown in the loading overlay, not here. -->
                         <Label Text="{Binding UpdateStatusMessage}"
                                IsVisible="{Binding HasUpdateStatusMessage}"
                                FontFamily="InterRegular" FontSize="13"

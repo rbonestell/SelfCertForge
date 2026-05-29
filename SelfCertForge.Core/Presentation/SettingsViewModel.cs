@@ -15,12 +15,12 @@ public sealed class SettingsViewModel : ObservableObject
     private readonly IDataFolderService? _dataFolderService;
     private readonly IConfirmationDialog? _confirmationDialog;
     private readonly IGithubReleaseService? _githubRelease;
+    private readonly ILoadingOverlay? _overlay;
 
     // Update fields ----------------------------------------------------------
     private bool _isCheckingForUpdate;
     private bool _isUpdateAvailable;
     private bool _isDownloading;
-    private int _downloadProgress;
     private UpdateInfo? _availableUpdate;
     private string? _updateStatusMessage;
 
@@ -59,7 +59,8 @@ public sealed class SettingsViewModel : ObservableObject
         IActivityLog? activityLog,
         IDataFolderService? dataFolderService,
         IConfirmationDialog? confirmationDialog,
-        IGithubReleaseService? githubRelease = null)
+        IGithubReleaseService? githubRelease = null,
+        ILoadingOverlay? loadingOverlay = null)
     {
         _updateService = updateService;
         _preferencesStore = preferencesStore;
@@ -67,6 +68,7 @@ public sealed class SettingsViewModel : ObservableObject
         _dataFolderService = dataFolderService;
         _confirmationDialog = confirmationDialog;
         _githubRelease = githubRelease;
+        _overlay = loadingOverlay;
 
         var raw = Assembly.GetEntryAssembly()
             ?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
@@ -200,16 +202,6 @@ public sealed class SettingsViewModel : ObservableObject
         }
     }
 
-    public int DownloadProgress
-    {
-        get => _downloadProgress;
-        private set
-        {
-            if (SetProperty(ref _downloadProgress, value))
-                OnPropertyChanged(nameof(DownloadProgressNormalized));
-        }
-    }
-
     public UpdateInfo? AvailableUpdate
     {
         get => _availableUpdate;
@@ -227,8 +219,6 @@ public sealed class SettingsViewModel : ObservableObject
     }
 
     public bool HasUpdateStatusMessage => !string.IsNullOrEmpty(_updateStatusMessage);
-
-    public double DownloadProgressNormalized => _downloadProgress / 100.0;
 
     public AsyncCommand CheckForUpdateCommand { get; }
     public AsyncCommand DownloadAndInstallCommand { get; }
@@ -436,24 +426,23 @@ public sealed class SettingsViewModel : ObservableObject
         if (AvailableUpdate is null || IsDownloading) return;
 
         IsDownloading = true;
-        DownloadProgress = 0;
-        UpdateStatusMessage = "Downloading update…";
+        UpdateStatusMessage = null;
 
         try
         {
-            var progress = new Progress<int>(p =>
+            await _overlay.RunOrDirectAsync("Downloading Update…", async () =>
             {
-                DownloadProgress = p;
-                UpdateStatusMessage = $"Downloading update… {p}%";
+                await _updateService.DownloadUpdateAsync(AvailableUpdate);
+                await _overlay.RunOrDirectAsync("Installing Update…", () =>
+                    _updateService.ApplyUpdateAndRestartAsync(AvailableUpdate));
             });
-
-            await _updateService.DownloadUpdateAsync(AvailableUpdate, progress);
-            UpdateStatusMessage = "Applying update and restarting…";
-            await _updateService.ApplyUpdateAndRestartAsync(AvailableUpdate);
         }
         catch
         {
-            UpdateStatusMessage = "Download failed. Please try again.";
+            UpdateStatusMessage = "Update failed. Please try again.";
+        }
+        finally
+        {
             IsDownloading = false;
         }
     }

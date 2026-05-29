@@ -230,6 +230,19 @@ public sealed class CreateSignedCertDialogViewModelTests
         vm.ValidityHasError.Should().BeFalse();
     }
 
+    [Fact]
+    public void Submit_RunsForgeThroughOverlay_WithCaption()
+    {
+        var overlay = new FakeLoadingOverlay();
+        var vm = new CreateSignedCertDialogViewModel(new FakeForgeService(_ => FakeCert()), preferences: null, overlay: overlay);
+        vm.Initialize("issuer1", "Root");
+        vm.CommonName = "leaf.local";
+
+        ((System.Windows.Input.ICommand)vm.CreateCommand).Execute(null);
+
+        overlay.Messages.Should().ContainSingle().Which.Should().Be("Forging Certificate…");
+    }
+
     private static StoredCertificate FakeCert(string id = "c1") => new(
         Id: id, Kind: StoredCertificateKind.Root, CommonName: "Test",
         Subject: "CN=Test", IssuerId: null, IssuerName: null,
@@ -248,5 +261,7 @@ public sealed class CreateSignedCertDialogViewModelTests
             CallCount++;
             return Task.FromResult(_factory(request));
         }
+        public Task<StoredCertificate> ForgeFromCsrAsync(ForgeFromCsrRequest request, CancellationToken ct = default)
+            => throw new NotImplementedException();
     }
 }

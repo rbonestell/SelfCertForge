@@ -11,6 +11,7 @@ public sealed class CreateSignedCertDialogViewModel : ObservableObject
 {
     private readonly IForgeService _forge;
     private readonly IUserPreferencesStore? _preferences;
+    private readonly ILoadingOverlay? _overlay;
 
     private string _issuerId = string.Empty;
     private string _issuerName = string.Empty;
@@ -38,10 +39,11 @@ public sealed class CreateSignedCertDialogViewModel : ObservableObject
     public CreateSignedCertDialogViewModel(IForgeService forge)
         : this(forge, null) { }
 
-    public CreateSignedCertDialogViewModel(IForgeService forge, IUserPreferencesStore? preferences)
+    public CreateSignedCertDialogViewModel(IForgeService forge, IUserPreferencesStore? preferences, ILoadingOverlay? overlay = null)
     {
         _forge = forge;
         _preferences = preferences;
+        _overlay = overlay;
         CreateCommand = new AsyncRelayCommand(SubmitAsync, () => CanSubmit);
         CancelCommand = new RelayCommand(() => CancelRequested?.Invoke(this, EventArgs.Empty));
         AddSanCommand = new RelayCommand(AddSan, () => !string.IsNullOrWhiteSpace(_newSanValue) && !_isCreating);
@@ -303,7 +305,7 @@ public sealed class CreateSignedCertDialogViewModel : ObservableObject
         ErrorMessage = null;
         try
         {
-            var stored = await _forge.ForgeAsync(new ForgeRequest(
+            var request = new ForgeRequest(
                 Mode: ForgeMode.Child,
                 CommonName: _commonName.Trim(),
                 ValidityDays: _validityDays,
@@ -320,7 +322,9 @@ public sealed class CreateSignedCertDialogViewModel : ObservableObject
                 KeyUsageDecipherOnly: _keyUsageDecipherOnly,
                 EkuServerAuth: _ekuServerAuth,
                 EkuClientAuth: _ekuClientAuth,
-                HashAlgorithm: _hashAlgorithm));
+                HashAlgorithm: _hashAlgorithm);
+            var forge = _forge;
+            var stored = await _overlay.RunOrDirectAsync("Forging Certificate…", () => forge.ForgeAsync(request));
             Created?.Invoke(this, stored);
             IsCreating = false;
         }

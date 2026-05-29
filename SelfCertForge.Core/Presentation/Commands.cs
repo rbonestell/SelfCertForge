@@ -25,6 +25,9 @@ internal sealed class AsyncRelayCommand : ICommand
     private readonly Func<bool> _canExecute;
     private bool _isExecuting;
 
+    public AsyncRelayCommand(Func<Task> execute)
+        : this(execute, () => true) { }
+
     public AsyncRelayCommand(Func<Task> execute, Func<bool> canExecute)
     {
         _execute = execute;
@@ -55,6 +58,8 @@ internal sealed class AsyncRelayCommand : ICommand
             RaiseCanExecuteChanged();
         }
     }
+
+    public Task ExecuteAsync(object? parameter) => _execute();
 
     public void RaiseCanExecuteChanged() =>
         CanExecuteChanged?.Invoke(this, EventArgs.Empty);

@@ -164,6 +164,276 @@ public sealed class DotNetCryptoCertificateWorkflowService : ICertificateWorkflo
         });
     }
 
+    public Task<CsrInspectionResult> InspectCsrAsync(string csrPem, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (string.IsNullOrWhiteSpace(csrPem))
+            return Task.FromResult(new CsrInspectionResult(false, null, new[] { CsrValidationError.Malformed }));
+
+        CertificateRequest req;
+        try
+        {
+            req = CertificateRequest.LoadSigningRequestPem(
+                csrPem,
+                HashAlgorithmName.SHA256,
+                CertificateRequestLoadOptions.SkipSignatureValidation
+                    | CertificateRequestLoadOptions.UnsafeLoadCertificateExtensions);
+        }
+        catch (Exception ex) when (ex is CryptographicException or FormatException or ArgumentException)
+        {
+            return Task.FromResult(new CsrInspectionResult(false, null, new[] { CsrValidationError.Malformed }));
+        }
+
+        var errors = new List<CsrValidationError>();
+
+        // PoP signature
+        try
+        {
+            _ = CertificateRequest.LoadSigningRequestPem(
+                csrPem,
+                HashAlgorithmName.SHA256,
+                CertificateRequestLoadOptions.UnsafeLoadCertificateExtensions);
+        }
+        catch (CryptographicException)
+        {
+            errors.Add(CsrValidationError.InvalidProofOfPossession);
+        }
+
+        // Subject
+        var subjectDn = req.SubjectName.Name ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(subjectDn))
+            errors.Add(CsrValidationError.SubjectDnEmptyOrMalformed);
+
+        // Algorithm + key size
+        string algorithm = "Unknown";
+        int bits = 0;
+        using (var rsa = TryGetRsaPublicKey(req))
+        {
+            if (rsa is not null)
+            {
+                algorithm = "RSA";
+                bits = rsa.KeySize;
+                if (bits < 2048)
+                    errors.Add(CsrValidationError.KeyTooSmall);
+            }
+            else
+            {
+                errors.Add(CsrValidationError.UnsupportedKeyAlgorithm);
+            }
+        }
+
+        if (errors.Count > 0)
+            return Task.FromResult(new CsrInspectionResult(false, null, errors));
+
+        var summary = BuildSummary(req, csrPem, algorithm, bits);
+        return Task.FromResult(new CsrInspectionResult(true, summary, Array.Empty<CsrValidationError>()));
+    }
+
+    private static RSA? TryGetRsaPublicKey(CertificateRequest req)
+    {
+        try { return req.PublicKey.GetRSAPublicKey(); }
+        catch (CryptographicException) { return null; }
+    }
+
+    private static CsrSummary BuildSummary(CertificateRequest req, string pem, string algorithm, int bits)
+    {
+        var spki = req.PublicKey.ExportSubjectPublicKeyInfo();
+        var fp = Convert.ToHexString(SHA256.HashData(spki));
+
+        IReadOnlyList<string> sans = ExtractSans(req);
+        var ku = ExtractRequestedKeyUsage(req);
+        var ekus = ExtractRequestedEkus(req);
+
+        return new CsrSummary(
+            SubjectDistinguishedName: req.SubjectName.Name ?? string.Empty,
+            PublicKeyAlgorithm: algorithm,
+            PublicKeyBits: bits,
+            PublicKeyFingerprintSha256: fp,
+            RawCsrPem: pem,
+            RequestedSans: sans,
+            RequestedKeyUsage: ku,
+            RequestedEkus: ekus);
+    }
+
+    private static IReadOnlyList<string> ExtractSans(CertificateRequest req)
+    {
+        foreach (var ext in req.CertificateExtensions)
+        {
+            if (ext is X509SubjectAlternativeNameExtension san)
+            {
+                var values = new List<string>();
+                values.AddRange(san.EnumerateDnsNames());
+                foreach (var ip in san.EnumerateIPAddresses())
+                    values.Add("IP:" + ip);
+                return values;
+            }
+        }
+        return Array.Empty<string>();
+    }
+
+    private static CsrRequestedKeyUsages? ExtractRequestedKeyUsage(CertificateRequest req)
+    {
+        foreach (var ext in req.CertificateExtensions)
+        {
+            if (ext is X509KeyUsageExtension ku)
+            {
+                var f = ku.KeyUsages;
+                return new CsrRequestedKeyUsages(
+                    DigitalSignature: f.HasFlag(X509KeyUsageFlags.DigitalSignature),
+                    NonRepudiation:   f.HasFlag(X509KeyUsageFlags.NonRepudiation),
+                    KeyEncipherment:  f.HasFlag(X509KeyUsageFlags.KeyEncipherment),
+                    DataEncipherment: f.HasFlag(X509KeyUsageFlags.DataEncipherment),
+                    KeyAgreement:     f.HasFlag(X509KeyUsageFlags.KeyAgreement),
+                    KeyCertSign:      f.HasFlag(X509KeyUsageFlags.KeyCertSign),
+                    CrlSign:          f.HasFlag(X509KeyUsageFlags.CrlSign));
+            }
+        }
+        return null;
+    }
+
+    private static CsrRequestedEkus? ExtractRequestedEkus(CertificateRequest req)
+    {
+        foreach (var ext in req.CertificateExtensions)
+        {
+            if (ext is X509EnhancedKeyUsageExtension eku)
+            {
+                bool s = false, c = false, cs = false, e = false, t = false;
+                foreach (var oid in eku.EnhancedKeyUsages)
+                {
+                    switch (oid.Value)
+                    {
+                        case "1.3.6.1.5.5.7.3.1": s = true; break;
+                        case "1.3.6.1.5.5.7.3.2": c = true; break;
+                        case "1.3.6.1.5.5.7.3.3": cs = true; break;
+                        case "1.3.6.1.5.5.7.3.4": e = true; break;
+                        case "1.3.6.1.5.5.7.3.8": t = true; break;
+                    }
+                }
+                return new CsrRequestedEkus(s, c, cs, e, t);
+            }
+        }
+        return null;
+    }
+
+    public Task<CertificateGenerationResult> GenerateCertificateFromCsrAsync(
+        CsrSigningRequest request,
+        string issuerCertificatePath,
+        string issuerPrivateKeyPath,
+        string outputDirectory,
+        string outputFileBaseName,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        Directory.CreateDirectory(outputDirectory);
+        var safeName = RequireSafeToken(outputFileBaseName, "Output file name");
+
+        var csrReq = CertificateRequest.LoadSigningRequestPem(
+            request.RawCsrPem,
+            ToHashName(request.SignatureHashAlgorithm),
+            CertificateRequestLoadOptions.UnsafeLoadCertificateExtensions);
+
+        using var issuerCert = X509Certificate2.CreateFromPem(File.ReadAllText(issuerCertificatePath));
+        using var issuerKey = RSA.Create();
+        issuerKey.ImportFromPem(File.ReadAllText(issuerPrivateKeyPath));
+
+        // Strip CSR-supplied extensions; we apply operator-chosen ones explicitly.
+        csrReq.CertificateExtensions.Clear();
+
+        csrReq.CertificateExtensions.Add(
+            new X509BasicConstraintsExtension(false, false, 0, critical: true));
+
+        csrReq.CertificateExtensions.Add(
+            new X509SubjectKeyIdentifierExtension(csrReq.PublicKey, critical: false));
+
+        csrReq.CertificateExtensions.Add(
+            X509AuthorityKeyIdentifierExtension.CreateFromCertificate(
+                issuerCert,
+                includeKeyIdentifier: true,
+                includeIssuerAndSerial: false));
+
+        var kuFlags = BuildCsrKeyUsageFlags(request);
+        if (kuFlags != X509KeyUsageFlags.None)
+            csrReq.CertificateExtensions.Add(new X509KeyUsageExtension(kuFlags, critical: true));
+
+        var ekuOids = BuildCsrEkuOids(request);
+        if (ekuOids.Count > 0)
+            csrReq.CertificateExtensions.Add(new X509EnhancedKeyUsageExtension(ekuOids, critical: false));
+
+        var sans = request.Sans.Select(s => s.Value).Distinct().ToList();
+        if (sans.Count > 0)
+        {
+            var sanBuilder = new SubjectAlternativeNameBuilder();
+            foreach (var s in sans)
+            {
+                if (s.StartsWith("IP:", StringComparison.OrdinalIgnoreCase)
+                    && System.Net.IPAddress.TryParse(s[3..], out var ip))
+                {
+                    sanBuilder.AddIpAddress(ip);
+                }
+                else
+                {
+                    var dns = s.StartsWith("DNS:", StringComparison.OrdinalIgnoreCase) ? s[4..] : s;
+                    sanBuilder.AddDnsName(dns);
+                }
+            }
+            csrReq.CertificateExtensions.Add(sanBuilder.Build(critical: false));
+        }
+
+        var notBefore = DateTimeOffset.UtcNow.AddSeconds(-5);
+        var notAfter = notBefore.AddDays(request.ValidityDays);
+
+        var serial = new byte[16];
+        RandomNumberGenerator.Fill(serial);
+
+        using var issued = csrReq.Create(
+            issuerCert.SubjectName,
+            X509SignatureGenerator.CreateForRSA(issuerKey, RSASignaturePadding.Pkcs1),
+            notBefore,
+            notAfter,
+            serial);
+
+        var pemPath = Path.Combine(outputDirectory, $"{safeName}.pem");
+        var crtPath = Path.Combine(outputDirectory, $"{safeName}.crt");
+        File.WriteAllText(pemPath, issued.ExportCertificatePem());
+        File.WriteAllBytes(crtPath, issued.Export(X509ContentType.Cert));
+
+        return Task.FromResult(new CertificateGenerationResult
+        {
+            OutputDirectory = outputDirectory,
+            GeneratedFiles = [pemPath, crtPath],
+            CertPemPath = pemPath,
+            KeyPath = null,
+        });
+    }
+
+    private static X509KeyUsageFlags BuildCsrKeyUsageFlags(CsrSigningRequest r)
+    {
+        var f = X509KeyUsageFlags.None;
+        if (r.KeyUsageDigitalSignature) f |= X509KeyUsageFlags.DigitalSignature;
+        if (r.KeyUsageNonRepudiation)   f |= X509KeyUsageFlags.NonRepudiation;
+        if (r.KeyUsageKeyEncipherment)  f |= X509KeyUsageFlags.KeyEncipherment;
+        if (r.KeyUsageDataEncipherment) f |= X509KeyUsageFlags.DataEncipherment;
+        if (r.KeyUsageKeyAgreement)     f |= X509KeyUsageFlags.KeyAgreement;
+        // KeyCertSign / CrlSign are CA-only KU bits. CSR-signed certs are end-entity
+        // (BasicConstraints CA=false), so we never propagate them — even if a CSR
+        // or operator requests them — to prevent issuing a sub-CA by accident.
+        return f;
+    }
+
+    private static OidCollection BuildCsrEkuOids(CsrSigningRequest r)
+    {
+        var oids = new OidCollection();
+        if (r.EkuServerAuth)      oids.Add(new Oid("1.3.6.1.5.5.7.3.1"));
+        if (r.EkuClientAuth)      oids.Add(new Oid("1.3.6.1.5.5.7.3.2"));
+        if (r.EkuCodeSigning)     oids.Add(new Oid("1.3.6.1.5.5.7.3.3"));
+        if (r.EkuEmailProtection) oids.Add(new Oid("1.3.6.1.5.5.7.3.4"));
+        if (r.EkuTimeStamping)    oids.Add(new Oid("1.3.6.1.5.5.7.3.8"));
+        return oids;
+    }
+
     private static void ValidateSourceContract(SignedCertificateRequest request)
     {
         var hasSeparateFields = HasValue(request.RootPrivateKeyPath) || HasValue(request.RootCertificatePath);

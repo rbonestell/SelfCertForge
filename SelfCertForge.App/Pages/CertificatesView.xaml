@@ -176,6 +176,9 @@
                                                          Label="{Binding PillLabel}" />
                                     <controls:StatusPill Kind="{Binding TrustPillKind}"
                                                          Label="{Binding TrustPillLabel}" />
+                                    <controls:StatusPill IsVisible="{Binding IsFromCsr}"
+                                                         Kind="csr"
+                                                         Label="From CSR" />
                                 </HorizontalStackLayout>
                             </VerticalStackLayout>
 
@@ -298,7 +301,8 @@
                     <VerticalStackLayout Spacing="0">
 
                         <!-- Export .KEY/.PEM -->
-                        <Grid Padding="16,14">
+                        <Grid Padding="16,14"
+                              IsEnabled="{Binding SelectedRow.CanExportKeyPem}">
                             <Grid.Behaviors>
                                 <controls:MenuItemHoverBehavior />
                             </Grid.Behaviors>
@@ -313,8 +317,9 @@
 
                         <BoxView Color="#80FFFFFF" HeightRequest="1" />
 
-                        <!-- Export .PFX -->
-                        <Grid Padding="16,14">
+                        <!-- Export .PFX (hidden for CSR-signed certs since there's no private key to bundle) -->
+                        <Grid Padding="16,14"
+                              IsVisible="{Binding SelectedRow.CanExportPfx}">
                             <Grid.Behaviors>
                                 <controls:MenuItemHoverBehavior />
                             </Grid.Behaviors>
@@ -327,7 +332,8 @@
                                    TextColor="White" />
                         </Grid>
 
-                        <BoxView Color="#80FFFFFF" HeightRequest="1" />
+                        <BoxView Color="#80FFFFFF" HeightRequest="1"
+                                 IsVisible="{Binding SelectedRow.CanExportPfx}" />
 
                         <!-- Export .DER -->
                         <Grid Padding="16,14">

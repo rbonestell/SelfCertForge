@@ -79,12 +79,103 @@ public sealed class SettingsViewModelTests
     }
 
     [Fact]
-    public void DownloadProgressNormalized_ReflectsDownloadProgress()
+    public async Task DownloadAndInstall_ShowsLightbox_WithDownloadingThenInstalling()
+    {
+        var update = new UpdateInfo("2.0.0", null, null, null);
+        var service = FakeUpdateService.WithUpdate(update);
+        var overlay = new FakeLoadingOverlay();
+        var vm = new SettingsViewModel(service, null, null, null, null, loadingOverlay: overlay);
+
+        await vm.CheckForUpdateAsync();
+        await vm.DownloadAndInstallCommand.ExecuteAsync();
+
+        overlay.Messages.Should().Equal("Downloading Update…", "Installing Update…");
+        overlay.MaxConcurrentDepth.Should().Be(2, "the install phase runs nested inside the download phase, so the overlay is re-entered in place rather than reopened");
+        service.WasApplied.Should().BeTrue();
+        vm.IsDownloading.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task DownloadAndInstall_WhenApplyFails_ResetsIsDownloadingAndSurfacesError()
+    {
+        var update = new UpdateInfo("2.0.0", null, null, null);
+        var service = FakeUpdateService.WithUpdate(update);
+        service.ThrowOnApply = true;
+        var overlay = new FakeLoadingOverlay();
+        var vm = new SettingsViewModel(service, null, null, null, null, loadingOverlay: overlay);
+
+        await vm.CheckForUpdateAsync();
+        await vm.DownloadAndInstallCommand.ExecuteAsync();
+
+        vm.IsDownloading.Should().BeFalse();
+        vm.UpdateStatusMessage.Should().Contain("failed");
+        overlay.Messages.Should().Contain("Downloading Update…");
+    }
+
+    [Fact]
+    public async Task DownloadAndInstall_WhenNoUpdateAvailable_IsNoOp()
     {
         var service = FakeUpdateService.WithNoUpdate();
+        var overlay = new FakeLoadingOverlay();
+        var vm = new SettingsViewModel(service, null, null, null, null, loadingOverlay: overlay);
+
+        // Deliberately no CheckForUpdateAsync — AvailableUpdate stays null.
+        await vm.DownloadAndInstallCommand.ExecuteAsync();
+
+        overlay.Messages.Should().BeEmpty();
+        service.WasApplied.Should().BeFalse();
+        vm.IsDownloading.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task DownloadAndInstall_WhenAlreadyDownloading_SecondInvocationIsNoOp()
+    {
+        var gate = new TaskCompletionSource();
+        var service = FakeUpdateService.WithUpdate(new UpdateInfo("2.0.0", null, null, null));
+        service.HoldDownloadUntil = gate.Task;
         var vm = new SettingsViewModel(service);
 
-        vm.DownloadProgressNormalized.Should().BeApproximately(0.0, 0.001);
+        await vm.CheckForUpdateAsync();
+
+        var first = vm.DownloadAndInstallCommand.ExecuteAsync();
+        var second = vm.DownloadAndInstallCommand.ExecuteAsync(); // IsDownloading == true → guard returns
+
+        gate.SetResult();
+        await Task.WhenAll(first, second);
+
+        service.ApplyCallCount.Should().Be(1, "the in-flight guard must prevent a concurrent second apply");
+    }
+
+    [Fact]
+    public async Task DownloadAndInstallCommand_IsDisabledUntilUpdateIsAvailable()
+    {
+        var update = new UpdateInfo("2.0.0", null, null, null);
+        var service = FakeUpdateService.WithUpdate(update);
+        var vm = new SettingsViewModel(service);
+
+        vm.DownloadAndInstallCommand.CanExecute(null).Should().BeFalse("no update is known yet");
+
+        await vm.CheckForUpdateAsync();
+
+        vm.DownloadAndInstallCommand.CanExecute(null).Should().BeTrue("an update is now available");
+    }
+
+    [Fact]
+    public async Task Commands_AreDisabledWhileDownloading()
+    {
+        var gate = new TaskCompletionSource();
+        var service = FakeUpdateService.WithUpdate(new UpdateInfo("2.0.0", null, null, null));
+        service.HoldDownloadUntil = gate.Task;
+        var vm = new SettingsViewModel(service);
+
+        await vm.CheckForUpdateAsync();
+        var downloadTask = vm.DownloadAndInstallCommand.ExecuteAsync();
+
+        vm.DownloadAndInstallCommand.CanExecute(null).Should().BeFalse("a download is in progress");
+        vm.CheckForUpdateCommand.CanExecute(null).Should().BeFalse("a download is in progress");
+
+        gate.SetResult();
+        await downloadTask;
     }
 
     [Fact]
@@ -104,8 +195,10 @@ public sealed class SettingsViewModelTests
         private readonly Exception? _ex;
         private readonly Task<UpdateInfo?>? _asyncTask;
 
-        public int DownloadProgressToReport { get; set; }
         public bool ThrowOnDownload { get; set; }
+        public bool ThrowOnApply { get; set; }
+        public Task? HoldDownloadUntil { get; set; }
+        public int ApplyCallCount { get; private set; }
         public bool IsUpdateSupported { get; }
 
         public static FakeUpdateService WithUpdate(UpdateInfo update) => new(update: update);
@@ -132,10 +225,16 @@ public sealed class SettingsViewModelTests
         public Task DownloadUpdateAsync(UpdateInfo update, IProgress<int>? progress = null, CancellationToken ct = default)
         {
             if (ThrowOnDownload) throw new InvalidOperationException("download failed");
-            progress?.Report(DownloadProgressToReport);
-            return Task.CompletedTask;
+            return HoldDownloadUntil ?? Task.CompletedTask;
         }
 
-        public Task ApplyUpdateAndRestartAsync(UpdateInfo update) => Task.CompletedTask;
+        public bool WasApplied => ApplyCallCount > 0;
+
+        public Task ApplyUpdateAndRestartAsync(UpdateInfo update)
+        {
+            ApplyCallCount++;
+            if (ThrowOnApply) throw new InvalidOperationException("apply failed");
+            return Task.CompletedTask;
+        }
     }
 }

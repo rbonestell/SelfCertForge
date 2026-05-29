@@ -96,6 +96,7 @@ public sealed class AuthoritiesViewModelTests
     private sealed class NoOpNavigationService : INavigationService
     {
         public void NavigateToCertificate(string certId) { }
+        public Task NavigateToAsync(AppRoute route, CancellationToken ct = default) => Task.CompletedTask;
     }
 
     private sealed class NoOpExportService : ICertificateExportService
@@ -144,5 +145,34 @@ public sealed class AuthoritiesViewModelTests
         public Task UpdateAsync(StoredCertificate cert, CancellationToken ct = default) => Task.CompletedTask;
         public Task RemoveAsync(string id, CancellationToken ct = default) => Task.CompletedTask;
         public void Add(StoredCertificate c) { _items.Add(c); Changed?.Invoke(this, EventArgs.Empty); }
+    }
+
+    private sealed class StubFolderPicker : IFolderPicker
+    {
+        private readonly string _path;
+        public StubFolderPicker(string path) => _path = path;
+        public Task<string?> PickAsync(CancellationToken ct = default) => Task.FromResult<string?>(_path);
+    }
+
+    [Fact]
+    public void ExportDer_RunsThroughOverlay_WithCaption()
+    {
+        var overlay = new FakeLoadingOverlay();
+        var store = new FakeStore(Root("r1"));
+        var vm = new AuthoritiesViewModel(
+            store,
+            new NoOpCreateRootDialog(),
+            new NoOpCreateSignedCertDialog(),
+            new NoOpNavigationService(),
+            new NoOpExportService(),
+            new StubFolderPicker("/tmp/export"),
+            new NoOpPfxPasswordDialog(),
+            new NoOpConfirmationDialog(),
+            loadingOverlay: overlay);
+        vm.SelectedRow = vm.Rows.Single(r => r.Id == "r1");
+
+        ((System.Windows.Input.ICommand)vm.ExportDerCommand).Execute(null);
+
+        overlay.Messages.Should().ContainSingle().Which.Should().Be("Exporting Certificate…");
     }
 }

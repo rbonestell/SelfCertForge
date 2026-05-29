@@ -26,13 +26,16 @@ public static class FilePickerHelper
                 if (extensions is not null)
                 {
                     var list = new List<UTType>();
+                    var anyUnresolved = false;
                     foreach (var raw in extensions)
                     {
                         var ext = raw.TrimStart('.').Trim();
                         if (string.IsNullOrEmpty(ext)) continue;
                         var t = UTType.CreateFromExtension(ext);
-                        if (t is not null) list.Add(t);
+                        if (t is null) { anyUnresolved = true; continue; }
+                        list.Add(t);
                     }
+                    if (anyUnresolved) list.Add(UTTypes.Data);
                     utTypes = list.Count > 0 ? list.ToArray() : new[] { UTTypes.Item };
                 }
                 else

@@ -24,4 +24,6 @@ public sealed record StoredCertificate(
     string? PrivateKeyPath = null,
     string? OutputDirectory = null,
     IReadOnlyList<string>? KeyUsages = null,
-    IReadOnlyList<string>? ExtendedKeyUsages = null);
+    IReadOnlyList<string>? ExtendedKeyUsages = null,
+    bool IssuedFromCsr = false,
+    string? SourceCsrFilename = null);

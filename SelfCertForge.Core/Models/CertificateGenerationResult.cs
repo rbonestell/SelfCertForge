@@ -6,5 +6,5 @@ public sealed class CertificateGenerationResult
 
     public required IReadOnlyList<string> GeneratedFiles { get; init; }
     public required string CertPemPath { get; init; }
-    public required string KeyPath { get; init; }
+    public required string? KeyPath { get; init; }
 }

@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using CommunityToolkit.Maui;
+using SkiaSharp.Views.Maui.Controls.Hosting;
 #if WINDOWS
 using Microsoft.Maui.LifecycleEvents;
 #endif
@@ -32,6 +33,7 @@ public static class MauiProgram
         builder
             .UseMauiApp<App>()
             .UseMauiCommunityToolkit()
+            .UseSkiaSharp()
             .ConfigureFonts(fonts =>
             {
                 fonts.AddFont("Inter-Regular.ttf", "InterRegular");
@@ -64,28 +66,34 @@ public static class MauiProgram
         builder.Services.AddSingleton<IGithubReleaseService>(_ =>
             new GithubReleaseService(new HttpClient(), "rbonestell", "SelfCertForge"));
 
+        // All app data lives under a dedicated SelfCertForge subfolder of the
+        // platform app-data root. Resolving it also runs the one-time migration
+        // that relocates legacy files which earlier builds wrote straight into
+        // the root. Computed once here so every store shares the same path.
+        var dataRoot = DataFolderLayout.Resolve(FileSystem.AppDataDirectory);
+
         // Preferences store — must register before consumers (activity log, dialogs, settings vm).
         builder.Services.AddSingleton<IUserPreferencesStore>(sp =>
         {
-            var store = new JsonUserPreferencesStore(FileSystem.AppDataDirectory);
+            var store = new JsonUserPreferencesStore(dataRoot);
             // Best-effort load; failures fall back to defaults inside the store.
             _ = store.LoadAsync();
             return store;
         });
 
         builder.Services.AddSingleton<ICertificateStore>(_ =>
-            new JsonCertificateStore(FileSystem.AppDataDirectory));
+            new JsonCertificateStore(dataRoot));
         builder.Services.AddSingleton<IActivityLog>(sp =>
-            new JsonActivityLog(FileSystem.AppDataDirectory,
+            new JsonActivityLog(dataRoot,
                 sp.GetRequiredService<IUserPreferencesStore>()));
 
         // Platform-specific data-folder reveal service.
 #if MACCATALYST
         builder.Services.AddSingleton<IDataFolderService>(_ =>
-            new Platforms.MacCatalyst.MacDataFolderService(FileSystem.AppDataDirectory));
+            new Platforms.MacCatalyst.MacDataFolderService(dataRoot));
 #elif WINDOWS
         builder.Services.AddSingleton<IDataFolderService>(_ =>
-            new Platforms.Windows.WindowsDataFolderService(FileSystem.AppDataDirectory));
+            new Platforms.Windows.WindowsDataFolderService(dataRoot));
 #endif
 
         builder.Services.AddSingleton<SettingsViewModel>(sp => new SettingsViewModel(
@@ -95,7 +103,8 @@ public static class MauiProgram
             // Optional — only registered on macCatalyst/Windows; null on other TFMs.
             sp.GetService<IDataFolderService>(),
             sp.GetRequiredService<IConfirmationDialog>(),
-            sp.GetRequiredService<IGithubReleaseService>()));
+            sp.GetRequiredService<IGithubReleaseService>(),
+            sp.GetRequiredService<ILoadingOverlay>()));
         builder.Services.AddSingleton<ShellViewModel>(sp => new ShellViewModel(
             sp.GetRequiredService<SettingsViewModel>(),
             sp.GetRequiredService<IGithubReleaseService>()));
@@ -107,7 +116,8 @@ public static class MauiProgram
             sp.GetRequiredService<IFolderPicker>(),
             sp.GetRequiredService<IPfxPasswordDialog>(),
             sp.GetRequiredService<IConfirmationDialog>(),
-            sp.GetRequiredService<ITrustStoreChecker>()));
+            sp.GetRequiredService<ITrustStoreChecker>(),
+            sp.GetRequiredService<ILoadingOverlay>()));
         builder.Services.AddSingleton<DashboardViewModel>(sp => new DashboardViewModel(
             sp.GetRequiredService<ICertificateStore>(),
             sp.GetRequiredService<IActivityLog>(),
@@ -117,7 +127,7 @@ public static class MauiProgram
             sp.GetRequiredService<ICertificateStore>(),
             sp.GetRequiredService<IActivityLog>(),
             sp.GetRequiredService<ICertificateWorkflowService>(),
-            FileSystem.AppDataDirectory));
+            dataRoot));
         builder.Services.AddSingleton<INavigationService, NavigationService>();
         builder.Services.AddSingleton<IFolderPicker, MauiFolderPicker>();
         builder.Services.AddSingleton<IPfxPasswordDialog, MauiPfxPasswordDialog>();
@@ -125,12 +135,22 @@ public static class MauiProgram
         builder.Services.AddSingleton<ITrustStoreChecker, SystemTrustStoreChecker>();
         builder.Services.AddSingleton<ICreateRootDialog, CreateRootDialogHost>();
         builder.Services.AddSingleton<ICreateSignedCertDialog, CreateSignedCertDialogHost>();
+        builder.Services.AddSingleton<ICsrFilePicker, MauiCsrFilePicker>();
+        builder.Services.AddSingleton<ILoadingOverlay, MauiLoadingOverlay>();
+        builder.Services.AddSingleton<ICreateFromCsrDialog>(sp => new CreateFromCsrDialogHost(sp));
+        builder.Services.AddTransient<CreateFromCsrDialog>();
+        builder.Services.AddTransient<CreateFromCsrDialogViewModel>(sp => new CreateFromCsrDialogViewModel(
+            sp.GetRequiredService<IForgeService>(),
+            sp.GetRequiredService<IUserPreferencesStore>(),
+            sp.GetRequiredService<ILoadingOverlay>()));
         builder.Services.AddTransient<CreateRootDialogViewModel>(sp => new CreateRootDialogViewModel(
             sp.GetRequiredService<IForgeService>(),
-            sp.GetRequiredService<IUserPreferencesStore>()));
+            sp.GetRequiredService<IUserPreferencesStore>(),
+            sp.GetRequiredService<ILoadingOverlay>()));
         builder.Services.AddTransient<CreateSignedCertDialogViewModel>(sp => new CreateSignedCertDialogViewModel(
             sp.GetRequiredService<IForgeService>(),
-            sp.GetRequiredService<IUserPreferencesStore>()));
+            sp.GetRequiredService<IUserPreferencesStore>(),
+            sp.GetRequiredService<ILoadingOverlay>()));
         builder.Services.AddTransient<CreateRootDialog>();
         builder.Services.AddTransient<CreateSignedCertDialog>();
 
@@ -144,7 +164,11 @@ public static class MauiProgram
             sp.GetRequiredService<IFolderPicker>(),
             sp.GetRequiredService<IPfxPasswordDialog>(),
             sp.GetRequiredService<IConfirmationDialog>(),
-            sp.GetRequiredService<ITrustStoreChecker>()));
+            sp.GetRequiredService<ITrustStoreChecker>(),
+            sp.GetRequiredService<ICreateFromCsrDialog>(),
+            sp.GetRequiredService<ICsrFilePicker>(),
+            sp.GetRequiredService<ICertificateWorkflowService>(),
+            sp.GetRequiredService<ILoadingOverlay>()));
 
 #if DEBUG
         builder.Logging.AddDebug();

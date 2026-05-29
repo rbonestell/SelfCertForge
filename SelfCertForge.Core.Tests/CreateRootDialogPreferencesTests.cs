@@ -90,5 +90,7 @@ public sealed class CreateRootDialogPreferencesTests
         public FakeForge(Func<ForgeRequest, StoredCertificate> f) => _f = f;
         public Task<StoredCertificate> ForgeAsync(ForgeRequest request, CancellationToken ct = default) =>
             Task.FromResult(_f(request));
+        public Task<StoredCertificate> ForgeFromCsrAsync(ForgeFromCsrRequest request, CancellationToken ct = default)
+            => throw new NotImplementedException();
     }
 }
