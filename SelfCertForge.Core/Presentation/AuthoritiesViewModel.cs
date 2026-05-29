@@ -20,6 +20,7 @@ public sealed class AuthoritiesViewModel : ObservableObject
     private readonly ICreateFromCsrDialog? _createFromCsrDialog;
     private readonly ICsrFilePicker? _csrFilePicker;
     private readonly ICertificateWorkflowService? _workflow;
+    private readonly ILoadingOverlay? _overlay;
 
     private string _searchText = string.Empty;
     private AuthorityRowViewModel? _selectedRow;
@@ -37,7 +38,8 @@ public sealed class AuthoritiesViewModel : ObservableObject
         ITrustStoreChecker? trustChecker = null,
         ICreateFromCsrDialog? createFromCsrDialog = null,
         ICsrFilePicker? csrFilePicker = null,
-        ICertificateWorkflowService? workflow = null)
+        ICertificateWorkflowService? workflow = null,
+        ILoadingOverlay? loadingOverlay = null)
     {
         _store = store;
         _createRootDialog = createRootDialog;
@@ -51,6 +53,7 @@ public sealed class AuthoritiesViewModel : ObservableObject
         _createFromCsrDialog = createFromCsrDialog;
         _csrFilePicker = csrFilePicker;
         _workflow = workflow;
+        _overlay = loadingOverlay;
         _store.Changed += (_, _) => Refresh();
         Refresh();
 
@@ -204,7 +207,9 @@ public sealed class AuthoritiesViewModel : ObservableObject
         if (_selectedRow is null || _folderPicker is null || _exportService is null) return;
         var folder = await _folderPicker.PickAsync();
         if (folder is null) return;
-        await _exportService.ExportKeyPemAsync(_selectedRow.Source, folder);
+        var source = _selectedRow.Source;
+        var export = _exportService;
+        await _overlay.RunOrDirectAsync("Exporting Private Key…", () => export.ExportKeyPemAsync(source, folder));
     }
 
     private async Task ExportPfxAsync()
@@ -215,7 +220,9 @@ public sealed class AuthoritiesViewModel : ObservableObject
         if (!confirmed) return;
         var folder = await _folderPicker.PickAsync();
         if (folder is null) return;
-        await _exportService.ExportPfxAsync(_selectedRow.Source, folder, password);
+        var source = _selectedRow.Source;
+        var export = _exportService;
+        await _overlay.RunOrDirectAsync("Exporting PFX…", () => export.ExportPfxAsync(source, folder, password));
     }
 
     private async Task ExportDerAsync()
@@ -224,7 +231,9 @@ public sealed class AuthoritiesViewModel : ObservableObject
         if (_selectedRow is null || _folderPicker is null || _exportService is null) return;
         var folder = await _folderPicker.PickAsync();
         if (folder is null) return;
-        await _exportService.ExportDerAsync(_selectedRow.Source, folder);
+        var source = _selectedRow.Source;
+        var export = _exportService;
+        await _overlay.RunOrDirectAsync("Exporting Certificate…", () => export.ExportDerAsync(source, folder));
     }
 
     private async Task ExportP7bAsync()
@@ -233,7 +242,9 @@ public sealed class AuthoritiesViewModel : ObservableObject
         if (_selectedRow is null || _folderPicker is null || _exportService is null) return;
         var folder = await _folderPicker.PickAsync();
         if (folder is null) return;
-        await _exportService.ExportP7bAsync(_selectedRow.Source, folder);
+        var source = _selectedRow.Source;
+        var export = _exportService;
+        await _overlay.RunOrDirectAsync("Exporting Certificate Chain…", () => export.ExportP7bAsync(source, folder));
     }
 
     private void Refresh()
