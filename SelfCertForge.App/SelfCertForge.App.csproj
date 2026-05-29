@@ -54,7 +54,7 @@
 		     so for the Windows TFM we use a variant that bakes a squircle clip
 		     (~22.37% corner radius — Apple-style continuous-corner approximation)
 		     directly into the SVG and inlines its own bg fill. -->
-		<MauiIcon Include="Resources\AppIcon\appicon.svg" Color="#0B0C10"
+		<MauiIcon Include="Resources\AppIcon\appicon.svg" Color="#1B1D24"
 		          Condition="!$(TargetFramework.Contains('-windows'))" />
 		<MauiIcon Include="Resources\AppIcon\appicon_windows.svg"
 		          Condition="$(TargetFramework.Contains('-windows'))" />
