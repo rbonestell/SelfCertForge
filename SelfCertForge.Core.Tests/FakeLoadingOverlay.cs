@@ -6,15 +6,34 @@ public sealed class FakeLoadingOverlay : ILoadingOverlay
 {
     public List<string> Messages { get; } = new();
 
-    public Task RunAsync(string message, Func<Task> operation)
+    /// <summary>
+    /// Highest number of overlay scopes open simultaneously. A nested
+    /// <see cref="RunAsync(string, Func{Task})"/> — e.g. "Installing" running inside
+    /// "Downloading" — drives this to 2, letting tests prove the calls actually nest
+    /// rather than merely running back-to-back.
+    /// </summary>
+    public int MaxConcurrentDepth { get; private set; }
+
+    private int _depth;
+
+    public async Task RunAsync(string message, Func<Task> operation)
     {
-        Messages.Add(message);
-        return operation();
+        Enter(message);
+        try { await operation(); }
+        finally { _depth--; }
     }
 
-    public Task<T> RunAsync<T>(string message, Func<Task<T>> operation)
+    public async Task<T> RunAsync<T>(string message, Func<Task<T>> operation)
+    {
+        Enter(message);
+        try { return await operation(); }
+        finally { _depth--; }
+    }
+
+    private void Enter(string message)
     {
         Messages.Add(message);
-        return operation();
+        _depth++;
+        if (_depth > MaxConcurrentDepth) MaxConcurrentDepth = _depth;
     }
 }

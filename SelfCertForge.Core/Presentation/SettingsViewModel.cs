@@ -439,7 +439,7 @@ public sealed class SettingsViewModel : ObservableObject
         }
         catch
         {
-            UpdateStatusMessage = "Download failed. Please try again.";
+            UpdateStatusMessage = "Update failed. Please try again.";
         }
         finally
         {
