@@ -79,6 +79,22 @@ public sealed class SettingsViewModelTests
     }
 
     [Fact]
+    public async Task DownloadAndInstall_ShowsLightbox_WithDownloadingThenInstalling()
+    {
+        var update = new UpdateInfo("2.0.0", null, null, null);
+        var service = FakeUpdateService.WithUpdate(update);
+        var overlay = new FakeLoadingOverlay();
+        var vm = new SettingsViewModel(service, null, null, null, null, null, overlay);
+
+        await vm.CheckForUpdateAsync();
+        await vm.DownloadAndInstallCommand.ExecuteAsync();
+
+        overlay.Messages.Should().Equal("Downloading Update…", "Installing Update…");
+        service.WasApplied.Should().BeTrue();
+        vm.IsDownloading.Should().BeFalse();
+    }
+
+    [Fact]
     public void DownloadProgressNormalized_ReflectsDownloadProgress()
     {
         var service = FakeUpdateService.WithNoUpdate();
@@ -136,6 +152,12 @@ public sealed class SettingsViewModelTests
             return Task.CompletedTask;
         }
 
-        public Task ApplyUpdateAndRestartAsync(UpdateInfo update) => Task.CompletedTask;
+        public bool WasApplied { get; private set; }
+
+        public Task ApplyUpdateAndRestartAsync(UpdateInfo update)
+        {
+            WasApplied = true;
+            return Task.CompletedTask;
+        }
     }
 }

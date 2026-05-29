@@ -439,24 +439,23 @@ public sealed class SettingsViewModel : ObservableObject
         if (AvailableUpdate is null || IsDownloading) return;
 
         IsDownloading = true;
-        DownloadProgress = 0;
-        UpdateStatusMessage = "Downloading update…";
+        UpdateStatusMessage = null;
 
         try
         {
-            var progress = new Progress<int>(p =>
+            await _overlay.RunOrDirectAsync("Downloading Update…", async () =>
             {
-                DownloadProgress = p;
-                UpdateStatusMessage = $"Downloading update… {p}%";
+                await _updateService.DownloadUpdateAsync(AvailableUpdate);
+                await _overlay.RunOrDirectAsync("Installing Update…", () =>
+                    _updateService.ApplyUpdateAndRestartAsync(AvailableUpdate));
             });
-
-            await _updateService.DownloadUpdateAsync(AvailableUpdate, progress);
-            UpdateStatusMessage = "Applying update and restarting…";
-            await _updateService.ApplyUpdateAndRestartAsync(AvailableUpdate);
         }
         catch
         {
             UpdateStatusMessage = "Download failed. Please try again.";
+        }
+        finally
+        {
             IsDownloading = false;
         }
     }
