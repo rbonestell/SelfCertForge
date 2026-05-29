@@ -29,11 +29,11 @@ public partial class LoadingOverlayContent : Popup
         using var reader = new StreamReader(stream);
         var svg = await reader.ReadToEndAsync();
 
-        // #232631 == ColorPanelElevated (the card surface) so the WebView blends in.
+        // #1B1D24 matches the card surface so the WebView blends in (no seam).
         _cachedHtml =
             "<!DOCTYPE html><html><head>" +
             "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">" +
-            "<style>html,body{margin:0;padding:0;height:100%;background:#232631;overflow:hidden}" +
+            "<style>html,body{margin:0;padding:0;height:100%;background:#1B1D24;overflow:hidden}" +
             "svg{width:100%;height:100%;display:block}</style></head><body>" +
             svg +
             "</body></html>";
