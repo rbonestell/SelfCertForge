@@ -103,7 +103,8 @@ public static class MauiProgram
             // Optional — only registered on macCatalyst/Windows; null on other TFMs.
             sp.GetService<IDataFolderService>(),
             sp.GetRequiredService<IConfirmationDialog>(),
-            sp.GetRequiredService<IGithubReleaseService>()));
+            sp.GetRequiredService<IGithubReleaseService>(),
+            sp.GetRequiredService<ILoadingOverlay>()));
         builder.Services.AddSingleton<ShellViewModel>(sp => new ShellViewModel(
             sp.GetRequiredService<SettingsViewModel>(),
             sp.GetRequiredService<IGithubReleaseService>()));
