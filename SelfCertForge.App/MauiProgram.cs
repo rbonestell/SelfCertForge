@@ -64,28 +64,34 @@ public static class MauiProgram
         builder.Services.AddSingleton<IGithubReleaseService>(_ =>
             new GithubReleaseService(new HttpClient(), "rbonestell", "SelfCertForge"));
 
+        // All app data lives under a dedicated SelfCertForge subfolder of the
+        // platform app-data root. Resolving it also runs the one-time migration
+        // that relocates legacy files which earlier builds wrote straight into
+        // the root. Computed once here so every store shares the same path.
+        var dataRoot = DataFolderLayout.Resolve(FileSystem.AppDataDirectory);
+
         // Preferences store — must register before consumers (activity log, dialogs, settings vm).
         builder.Services.AddSingleton<IUserPreferencesStore>(sp =>
         {
-            var store = new JsonUserPreferencesStore(FileSystem.AppDataDirectory);
+            var store = new JsonUserPreferencesStore(dataRoot);
             // Best-effort load; failures fall back to defaults inside the store.
             _ = store.LoadAsync();
             return store;
         });
 
         builder.Services.AddSingleton<ICertificateStore>(_ =>
-            new JsonCertificateStore(FileSystem.AppDataDirectory));
+            new JsonCertificateStore(dataRoot));
         builder.Services.AddSingleton<IActivityLog>(sp =>
-            new JsonActivityLog(FileSystem.AppDataDirectory,
+            new JsonActivityLog(dataRoot,
                 sp.GetRequiredService<IUserPreferencesStore>()));
 
         // Platform-specific data-folder reveal service.
 #if MACCATALYST
         builder.Services.AddSingleton<IDataFolderService>(_ =>
-            new Platforms.MacCatalyst.MacDataFolderService(FileSystem.AppDataDirectory));
+            new Platforms.MacCatalyst.MacDataFolderService(dataRoot));
 #elif WINDOWS
         builder.Services.AddSingleton<IDataFolderService>(_ =>
-            new Platforms.Windows.WindowsDataFolderService(FileSystem.AppDataDirectory));
+            new Platforms.Windows.WindowsDataFolderService(dataRoot));
 #endif
 
         builder.Services.AddSingleton<SettingsViewModel>(sp => new SettingsViewModel(
@@ -117,7 +123,7 @@ public static class MauiProgram
             sp.GetRequiredService<ICertificateStore>(),
             sp.GetRequiredService<IActivityLog>(),
             sp.GetRequiredService<ICertificateWorkflowService>(),
-            FileSystem.AppDataDirectory));
+            dataRoot));
         builder.Services.AddSingleton<INavigationService, NavigationService>();
         builder.Services.AddSingleton<IFolderPicker, MauiFolderPicker>();
         builder.Services.AddSingleton<IPfxPasswordDialog, MauiPfxPasswordDialog>();
