@@ -10,6 +10,7 @@ public sealed class CreateFromCsrDialogViewModel : ObservableObject
 {
     private readonly IForgeService _forge;
     private readonly IUserPreferencesStore? _preferences;
+    private readonly ILoadingOverlay? _overlay;
 
     private string _signingAuthorityId = string.Empty;
     private string _signingAuthorityName = string.Empty;
@@ -34,10 +35,11 @@ public sealed class CreateFromCsrDialogViewModel : ObservableObject
     private bool _ekuServerAuth, _ekuClientAuth, _ekuCodeSigning, _ekuTimeStamping, _ekuEmailProtection;
     private HashAlgorithmKind _hashAlgorithm = HashAlgorithmKind.Sha256;
 
-    public CreateFromCsrDialogViewModel(IForgeService forge, IUserPreferencesStore? preferences = null)
+    public CreateFromCsrDialogViewModel(IForgeService forge, IUserPreferencesStore? preferences = null, ILoadingOverlay? overlay = null)
     {
         _forge = forge;
         _preferences = preferences;
+        _overlay = overlay;
         SubmitCommand = new AsyncRelayCommand(SubmitAsync, () => CanSubmit);
         CancelCommand = new RelayCommand(() => CancelRequested?.Invoke(this, EventArgs.Empty));
         AddSanCommand = new RelayCommand(AddSan,
@@ -279,7 +281,9 @@ public sealed class CreateFromCsrDialogViewModel : ObservableObject
                 EkuEmailProtection: _ekuEmailProtection,
                 SignatureHashAlgorithm: _hashAlgorithm);
 
-            var stored = await _forge.ForgeFromCsrAsync(new ForgeFromCsrRequest(request));
+            var forge = _forge;
+            var csrRequest = new ForgeFromCsrRequest(request);
+            var stored = await _overlay.RunOrDirectAsync("Signing CSR…", () => forge.ForgeFromCsrAsync(csrRequest));
             Created?.Invoke(this, stored);
         }
         catch (Exception ex)

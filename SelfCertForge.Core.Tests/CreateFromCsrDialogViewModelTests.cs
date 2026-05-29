@@ -134,6 +134,19 @@ public sealed class CreateFromCsrDialogViewModelTests
         forge.LastRequest.SigningRequest.SourceCsrFilename.Should().Be("x.csr");
     }
 
+    [Fact]
+    public async Task Submit_RunsForgeThroughOverlay_WithCaption()
+    {
+        var overlay = new FakeLoadingOverlay();
+        var forge = new FakeForge();
+        var vm = new CreateFromCsrDialogViewModel(forge, preferences: null, overlay: overlay);
+        vm.Initialize("ca", "Test CA", BasicSummary(), "x.csr");
+
+        await vm.SubmitAsyncForTest();
+
+        overlay.Messages.Should().ContainSingle().Which.Should().Be("Signing CSR…");
+    }
+
     private sealed class FakeForge : IForgeService
     {
         public ForgeFromCsrRequest? LastRequest { get; private set; }
