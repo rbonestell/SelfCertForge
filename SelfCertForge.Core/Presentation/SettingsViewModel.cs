@@ -15,6 +15,7 @@ public sealed class SettingsViewModel : ObservableObject
     private readonly IDataFolderService? _dataFolderService;
     private readonly IConfirmationDialog? _confirmationDialog;
     private readonly IGithubReleaseService? _githubRelease;
+    private readonly ILoadingOverlay? _overlay;
 
     // Update fields ----------------------------------------------------------
     private bool _isCheckingForUpdate;
@@ -59,7 +60,8 @@ public sealed class SettingsViewModel : ObservableObject
         IActivityLog? activityLog,
         IDataFolderService? dataFolderService,
         IConfirmationDialog? confirmationDialog,
-        IGithubReleaseService? githubRelease = null)
+        IGithubReleaseService? githubRelease = null,
+        ILoadingOverlay? loadingOverlay = null)
     {
         _updateService = updateService;
         _preferencesStore = preferencesStore;
@@ -67,6 +69,7 @@ public sealed class SettingsViewModel : ObservableObject
         _dataFolderService = dataFolderService;
         _confirmationDialog = confirmationDialog;
         _githubRelease = githubRelease;
+        _overlay = loadingOverlay;
 
         var raw = Assembly.GetEntryAssembly()
             ?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
