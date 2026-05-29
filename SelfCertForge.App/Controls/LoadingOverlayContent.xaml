@@ -18,7 +18,7 @@
                  can't render natively, so we host it in a WebView. Its HTML uses the
                  card surface color as the page background, so there's no transparency
                  seam and no white flash around the animation. -->
-            <Grid WidthRequest="140" HeightRequest="140" HorizontalOptions="Center">
+            <Grid WidthRequest="175" HeightRequest="175" HorizontalOptions="Center">
                 <WebView x:Name="Anim"
                          BackgroundColor="#1B1D24" />
             </Grid>
