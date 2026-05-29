@@ -42,12 +42,22 @@ internal static class CsrFixtureGenerator
     public static string TamperedRsa(int bits, string subjectDn)
     {
         var pem = ValidRsa(bits, subjectDn);
-        // Flip a char in the last body line (near the signature region) to corrupt proof-of-possession.
-        var lines = pem.Split('\n');
-        var bodyLine = Array.FindLastIndex(lines, l => !l.StartsWith("-----") && !string.IsNullOrWhiteSpace(l));
-        var line = lines[bodyLine];
-        lines[bodyLine] = line[..^2] + (line[^2] == 'A' ? "B" : "A") + line[^1];
-        return string.Join('\n', lines);
+
+        // Corrupt proof-of-possession by flipping one bit of the signature, working on the DECODED
+        // DER rather than the base64 text. In a CertificationRequest the signature BIT STRING is the
+        // final element, so the last DER byte is signature content; XOR-ing it preserves every ASN.1
+        // length and the overall structure (the CSR still PARSES) while making the signature fail to
+        // verify -> InvalidProofOfPossession. Editing base64 characters instead is non-deterministic:
+        // when the edit lands on a padding position it changes the decoded length, corrupting the DER
+        // so it no longer parses (Malformed) — the source of the historical flake.
+        if (!PemEncoding.TryFind(pem, out var fields))
+            throw new InvalidOperationException("Generated CSR was not valid PEM.");
+
+        var base64 = pem[fields.Base64Data].Replace("\r", "").Replace("\n", "");
+        var der = Convert.FromBase64String(base64);
+        der[^1] ^= 0x01;
+
+        return new string(PemEncoding.Write(pem[fields.Label], der));
     }
 
     public static string Truncated() =>
