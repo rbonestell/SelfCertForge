@@ -95,15 +95,6 @@ public sealed class SettingsViewModelTests
     }
 
     [Fact]
-    public void DownloadProgressNormalized_ReflectsDownloadProgress()
-    {
-        var service = FakeUpdateService.WithNoUpdate();
-        var vm = new SettingsViewModel(service);
-
-        vm.DownloadProgressNormalized.Should().BeApproximately(0.0, 0.001);
-    }
-
-    [Fact]
     public void IsUpdateSupported_WhenServiceUnsupported_CommandDoesNotCrash()
     {
         var service = FakeUpdateService.Unsupported();
@@ -120,7 +111,6 @@ public sealed class SettingsViewModelTests
         private readonly Exception? _ex;
         private readonly Task<UpdateInfo?>? _asyncTask;
 
-        public int DownloadProgressToReport { get; set; }
         public bool ThrowOnDownload { get; set; }
         public bool IsUpdateSupported { get; }
 
@@ -148,7 +138,6 @@ public sealed class SettingsViewModelTests
         public Task DownloadUpdateAsync(UpdateInfo update, IProgress<int>? progress = null, CancellationToken ct = default)
         {
             if (ThrowOnDownload) throw new InvalidOperationException("download failed");
-            progress?.Report(DownloadProgressToReport);
             return Task.CompletedTask;
         }
 

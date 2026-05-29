@@ -21,7 +21,6 @@ public sealed class SettingsViewModel : ObservableObject
     private bool _isCheckingForUpdate;
     private bool _isUpdateAvailable;
     private bool _isDownloading;
-    private int _downloadProgress;
     private UpdateInfo? _availableUpdate;
     private string? _updateStatusMessage;
 
@@ -203,16 +202,6 @@ public sealed class SettingsViewModel : ObservableObject
         }
     }
 
-    public int DownloadProgress
-    {
-        get => _downloadProgress;
-        private set
-        {
-            if (SetProperty(ref _downloadProgress, value))
-                OnPropertyChanged(nameof(DownloadProgressNormalized));
-        }
-    }
-
     public UpdateInfo? AvailableUpdate
     {
         get => _availableUpdate;
@@ -230,8 +219,6 @@ public sealed class SettingsViewModel : ObservableObject
     }
 
     public bool HasUpdateStatusMessage => !string.IsNullOrEmpty(_updateStatusMessage);
-
-    public double DownloadProgressNormalized => _downloadProgress / 100.0;
 
     public AsyncCommand CheckForUpdateCommand { get; }
     public AsyncCommand DownloadAndInstallCommand { get; }
