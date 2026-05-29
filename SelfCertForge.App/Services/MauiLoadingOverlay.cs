@@ -83,7 +83,8 @@ public sealed class MauiLoadingOverlay : ILoadingOverlay
             {
                 CanBeDismissedByTappingOutsideOfPopup = false,
                 Shape = null,
-                PageOverlayColor = Color.FromRgba(0, 0, 0, 0.6),
+                Shadow = null,
+                PageOverlayColor = Colors.Black.WithAlpha(0.6f),
             });
         });
     }

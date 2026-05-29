@@ -1,6 +1,8 @@
+using CommunityToolkit.Maui.Views;
+
 namespace SelfCertForge.App.Controls;
 
-public partial class LoadingOverlayContent : ContentView
+public partial class LoadingOverlayContent : Popup
 {
     public LoadingOverlayContent()
     {
