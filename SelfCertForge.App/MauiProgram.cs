@@ -134,6 +134,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<ICreateRootDialog, CreateRootDialogHost>();
         builder.Services.AddSingleton<ICreateSignedCertDialog, CreateSignedCertDialogHost>();
         builder.Services.AddSingleton<ICsrFilePicker, MauiCsrFilePicker>();
+        builder.Services.AddSingleton<ILoadingOverlay, MauiLoadingOverlay>();
         builder.Services.AddSingleton<ICreateFromCsrDialog>(sp => new CreateFromCsrDialogHost(sp));
         builder.Services.AddTransient<CreateFromCsrDialog>();
         builder.Services.AddTransient<CreateFromCsrDialogViewModel>(sp => new CreateFromCsrDialogViewModel(
