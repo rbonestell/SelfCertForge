@@ -15,14 +15,14 @@
             HorizontalOptions="Center"
             VerticalOptions="Center">
         <VerticalStackLayout Spacing="16" HorizontalOptions="Center">
-            <skia:SKLottieView x:Name="Animation"
-                               Source="loading.json"
-                               RepeatCount="-1"
-                               RepeatMode="Restart"
-                               WidthRequest="96"
-                               HeightRequest="96"
-                               HorizontalOptions="Center"
-                               VerticalOptions="Center" />
+            <!-- Fixed square box so the (square) Lottie can't be squashed by the
+                 stack's height measurement. SKLottieView fills the Grid 1:1. -->
+            <Grid WidthRequest="120" HeightRequest="120" HorizontalOptions="Center">
+                <skia:SKLottieView x:Name="Animation"
+                                   Source="loading.json"
+                                   RepeatCount="-1"
+                                   RepeatMode="Restart" />
+            </Grid>
             <Label x:Name="MessageLabel"
                    FontFamily="InterSemiBold"
                    FontSize="18"
