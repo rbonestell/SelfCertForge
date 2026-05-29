@@ -115,7 +115,8 @@ public static class MauiProgram
             sp.GetRequiredService<IFolderPicker>(),
             sp.GetRequiredService<IPfxPasswordDialog>(),
             sp.GetRequiredService<IConfirmationDialog>(),
-            sp.GetRequiredService<ITrustStoreChecker>()));
+            sp.GetRequiredService<ITrustStoreChecker>(),
+            sp.GetRequiredService<ILoadingOverlay>()));
         builder.Services.AddSingleton<DashboardViewModel>(sp => new DashboardViewModel(
             sp.GetRequiredService<ICertificateStore>(),
             sp.GetRequiredService<IActivityLog>(),
@@ -139,13 +140,16 @@ public static class MauiProgram
         builder.Services.AddTransient<CreateFromCsrDialog>();
         builder.Services.AddTransient<CreateFromCsrDialogViewModel>(sp => new CreateFromCsrDialogViewModel(
             sp.GetRequiredService<IForgeService>(),
-            sp.GetRequiredService<IUserPreferencesStore>()));
+            sp.GetRequiredService<IUserPreferencesStore>(),
+            sp.GetRequiredService<ILoadingOverlay>()));
         builder.Services.AddTransient<CreateRootDialogViewModel>(sp => new CreateRootDialogViewModel(
             sp.GetRequiredService<IForgeService>(),
-            sp.GetRequiredService<IUserPreferencesStore>()));
+            sp.GetRequiredService<IUserPreferencesStore>(),
+            sp.GetRequiredService<ILoadingOverlay>()));
         builder.Services.AddTransient<CreateSignedCertDialogViewModel>(sp => new CreateSignedCertDialogViewModel(
             sp.GetRequiredService<IForgeService>(),
-            sp.GetRequiredService<IUserPreferencesStore>()));
+            sp.GetRequiredService<IUserPreferencesStore>(),
+            sp.GetRequiredService<ILoadingOverlay>()));
         builder.Services.AddTransient<CreateRootDialog>();
         builder.Services.AddTransient<CreateSignedCertDialog>();
 
@@ -162,7 +166,8 @@ public static class MauiProgram
             sp.GetRequiredService<ITrustStoreChecker>(),
             sp.GetRequiredService<ICreateFromCsrDialog>(),
             sp.GetRequiredService<ICsrFilePicker>(),
-            sp.GetRequiredService<ICertificateWorkflowService>()));
+            sp.GetRequiredService<ICertificateWorkflowService>(),
+            sp.GetRequiredService<ILoadingOverlay>()));
 
 #if DEBUG
         builder.Logging.AddDebug();
