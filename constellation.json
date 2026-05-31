@@ -1,0 +1,20 @@
+{
+  "projectId": "proj:f12d1648d2294af59fe9db51a8dd19bb",
+  "branch": "main",
+  "languages": {
+    "c-sharp": {
+      "fileExtensions": [
+        ".cs",
+        ".csx"
+      ],
+      "lsp": {
+        "command": "roslyn-language-server",
+        "args": [
+          "--stdio",
+          "--autoLoadProjects"
+        ]
+      }
+    }
+  },
+  "lspEnrichment": true
+}

@@ -1,0 +1,19 @@
+{
+	"permissions": {
+		"allow": [
+			"mcp__plugin_constellation_*"
+		]
+	},
+	"extraKnownMarketplaces": {
+		"constellation-plugins": {
+			"source": {
+				"source": "github",
+				"repo": "ShiftinBits/constellation-claude"
+			},
+			"autoUpdate": true
+		}
+	},
+	"enabledPlugins": {
+		"constellation@constellation-plugins": true
+	}
+}
