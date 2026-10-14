@@ -167,9 +167,9 @@ public sealed class SettingsViewModelPreferencesTests
         var store = new InMemoryPrefs(UserPreferences.Default);
         var vm = MakeVm(store);
 
+        var saved = WaitForTrue(vm, nameof(vm.ShowSavedDefaults), () => vm.ShowSavedDefaults);
         vm.KeyBits = 4096; // CertDefaults card
-        // Wait past 500ms debounce + a margin
-        await Task.Delay(800);
+        await saved;
 
         vm.ShowSavedDefaults.Should().BeTrue();
         vm.ShowSavedApp.Should().BeFalse();
@@ -181,11 +181,24 @@ public sealed class SettingsViewModelPreferencesTests
         var store = new InMemoryPrefs(UserPreferences.Default);
         var vm = MakeVm(store);
 
+        var saved = WaitForTrue(vm, nameof(vm.ShowSavedApp), () => vm.ShowSavedApp);
         vm.ActivityRetention = ActivityRetention.OneHundred;
-        await Task.Delay(800);
+        await saved;
 
         vm.ShowSavedApp.Should().BeTrue();
         vm.ShowSavedDefaults.Should().BeFalse();
+    }
+
+    // Waits for the debounced save's toast flag instead of sleeping a fixed time,
+    // which flaked on loaded CI runners.
+    private static Task WaitForTrue(SettingsViewModel vm, string property, Func<bool> value)
+    {
+        var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        vm.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == property && value()) tcs.TrySetResult();
+        };
+        return tcs.Task.WaitAsync(TimeSpan.FromSeconds(10));
     }
 
     private static SettingsViewModel MakeVm(IUserPreferencesStore prefs) =>
