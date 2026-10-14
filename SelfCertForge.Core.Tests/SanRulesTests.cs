@@ -34,6 +34,29 @@ public sealed class SanRulesTests
         SanRules.ValidateDns(input).IsValid.Should().BeFalse();
     }
 
+    [Theory]
+    [InlineData("*.example.local")]
+    [InlineData("*.a.b.c")]
+    public void ValidateDns_AcceptsLeftmostWildcard(string input)
+    {
+        var r = SanRules.ValidateDns(input);
+        r.IsValid.Should().BeTrue($"input was '{input}', error '{r.Error}'");
+    }
+
+    [Theory]
+    [InlineData("*")]          // bare wildcard
+    [InlineData("*.local")]    // browsers won't match a wildcard on a single-label domain
+    [InlineData("a.*.b.c")]    // not left-most
+    [InlineData("foo*.x.y")]   // partial label
+    [InlineData("*foo.x.y")]
+    [InlineData("**.x.y")]
+    public void ValidateDns_RejectsInvalidWildcard(string input)
+    {
+        var r = SanRules.ValidateDns(input);
+        r.IsValid.Should().BeFalse();
+        r.Error.Should().Contain("Wildcard");
+    }
+
     [Fact]
     public void ValidateDns_RejectsLabelLongerThan63()
     {

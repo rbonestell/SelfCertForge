@@ -122,5 +122,6 @@ public sealed class CertificateExportService : ICertificateExportService
     }
 
     private static string SanitizeName(string name) =>
-        Regex.Replace(name, @"[^\w\-.]", "_").Trim('_');
+        // Trim dots too: a wildcard CN ("*.example.local") would otherwise become a hidden ".example.local" file.
+        Regex.Replace(name, @"[^\w\-.]", "_").Trim('_', '.');
 }
