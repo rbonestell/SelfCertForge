@@ -192,6 +192,19 @@ public sealed class CertificatesViewModel : ObservableObject
         await _store.RemoveAsync(_selectedRow.Id);
     }
 
+    // Exports surface their own failures; the command-level sink only logs (issue #2).
+    private async Task RunExportAsync(string caption, Func<Task> export)
+    {
+        try
+        {
+            await _overlay.RunOrDirectAsync(caption, export);
+        }
+        catch (Exception ex) when (_confirmationDialog is not null)
+        {
+            await _confirmationDialog.ShowAsync("Export Failed", ex.Message, confirmLabel: "OK", cancelLabel: "");
+        }
+    }
+
     private async Task ExportKeyPemAsync()
     {
         IsExportMenuOpen = false;
@@ -200,7 +213,7 @@ public sealed class CertificatesViewModel : ObservableObject
         if (folder is null) return;
         var source = _selectedRow.Source;
         var export = _exportService;
-        await _overlay.RunOrDirectAsync("Exporting Private Key…", () => export.ExportKeyPemAsync(source, folder));
+        await RunExportAsync("Exporting Private Key…", () => export.ExportKeyPemAsync(source, folder));
     }
 
     private async Task ExportPfxAsync()
@@ -213,7 +226,7 @@ public sealed class CertificatesViewModel : ObservableObject
         if (folder is null) return;
         var source = _selectedRow.Source;
         var export = _exportService;
-        await _overlay.RunOrDirectAsync("Exporting PFX…", () => export.ExportPfxAsync(source, folder, password));
+        await RunExportAsync("Exporting PFX…", () => export.ExportPfxAsync(source, folder, password));
     }
 
     private async Task ExportDerAsync()
@@ -224,7 +237,7 @@ public sealed class CertificatesViewModel : ObservableObject
         if (folder is null) return;
         var source = _selectedRow.Source;
         var export = _exportService;
-        await _overlay.RunOrDirectAsync("Exporting Certificate…", () => export.ExportDerAsync(source, folder));
+        await RunExportAsync("Exporting Certificate…", () => export.ExportDerAsync(source, folder));
     }
 
     private async Task ExportP7bAsync()
@@ -235,7 +248,7 @@ public sealed class CertificatesViewModel : ObservableObject
         if (folder is null) return;
         var source = _selectedRow.Source;
         var export = _exportService;
-        await _overlay.RunOrDirectAsync("Exporting Certificate Chain…", () => export.ExportP7bAsync(source, folder));
+        await RunExportAsync("Exporting Certificate Chain…", () => export.ExportP7bAsync(source, folder));
     }
 }
 

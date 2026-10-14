@@ -12,6 +12,14 @@ public static class CommandExceptionHandler
     internal static void Report(Exception ex)
     {
         System.Diagnostics.Debug.WriteLine($"[Command] Unhandled exception: {ex}");
-        Handler?.Invoke(ex);
+        try
+        {
+            Handler?.Invoke(ex);
+        }
+        catch (Exception handlerEx)
+        {
+            // A throwing handler would escape async void and crash the app.
+            System.Diagnostics.Debug.WriteLine($"[Command] Exception handler failed: {handlerEx}");
+        }
     }
 }

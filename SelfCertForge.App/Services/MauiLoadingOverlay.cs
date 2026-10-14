@@ -9,12 +9,15 @@ public sealed class MauiLoadingOverlay : ILoadingOverlay
 {
     private static readonly TimeSpan ShowDelay = TimeSpan.FromMilliseconds(150);
     private static readonly TimeSpan MinVisible = TimeSpan.FromMilliseconds(500);
+    private static readonly TimeSpan OpenTimeout = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan CloseRetryDelay = TimeSpan.FromMilliseconds(250);
 
     private readonly object _gate = new();
     private int _depth;
     private string _message = string.Empty;
     private LoadingOverlayContent? _content;
-    private Page? _hostPage;
+    private Task? _opened; // completes once the popup is on the modal stack
+    private Task? _shown;  // ShowPopupAsync: completes once the popup has closed
     private DateTime _shownAtUtc;
 
     public Task RunAsync(string message, Func<Task> operation)
@@ -74,18 +77,22 @@ public sealed class MauiLoadingOverlay : ILoadingOverlay
                 if (_depth == 0 || _content is not null)
                     return;
 
-                _hostPage = page;
                 _content = new LoadingOverlayContent { Message = _message };
                 _shownAtUtc = DateTime.UtcNow;
             }
 
-            _ = page.ShowPopupAsync(_content, new PopupOptions
+            var opened = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            _content.Opened += (_, _) => opened.TrySetResult();
+            _opened = opened.Task;
+            _shown = page.ShowPopupAsync(_content, new PopupOptions
             {
                 CanBeDismissedByTappingOutsideOfPopup = false,
                 Shape = null,
                 Shadow = null,
                 PageOverlayColor = Colors.Black.WithAlpha(0.6f),
             });
+            // A failed push never raises Opened; don't make ExitAsync wait out the timeout.
+            _shown.ContinueWith(_ => opened.TrySetResult(), TaskScheduler.Default);
         });
     }
 
@@ -103,10 +110,12 @@ public sealed class MauiLoadingOverlay : ILoadingOverlay
 
         DateTime shownAt;
         bool isShown;
+        Task? opened;
         lock (_gate)
         {
             isShown = _content is not null;
             shownAt = _shownAtUtc;
+            opened = _opened;
         }
 
         if (isShown)
@@ -114,6 +123,14 @@ public sealed class MauiLoadingOverlay : ILoadingOverlay
             var elapsed = DateTime.UtcNow - shownAt;
             if (elapsed < MinVisible)
                 await Task.Delay(MinVisible - elapsed);
+
+            // The show is fire-and-forget. Closing before the push lands throws PopupNotFound,
+            // and the popup would then appear with nothing left to close it.
+            if (opened is not null)
+            {
+                try { await opened.WaitAsync(OpenTimeout); }
+                catch (TimeoutException) { /* attempt the close anyway; retry covers a late push */ }
+            }
         }
 
         await MainThread.InvokeOnMainThreadAsync(async () =>
@@ -124,24 +141,42 @@ public sealed class MauiLoadingOverlay : ILoadingOverlay
                     return; // re-entered during the delay; keep it visible
             }
 
-            if (_content is not null && _hostPage is not null)
+            var content = _content;
+            var shown = _shown;
+            _content = null;
+            _opened = null;
+            _shown = null;
+            if (content is null || shown is null)
+                return;
+
+            try
             {
-                try
-                {
-                    await _hostPage.ClosePopupAsync();
-                }
-                catch (Exception ex)
-                {
-                    // Toolkit throws PopupNotFound/PopupBlocked if the modal stack isn't what
-                    // we expect; the operation already succeeded, so don't fail it (issue #2).
-                    App.Report("MauiLoadingOverlay.ExitAsync", ex);
-                }
-                finally
-                {
-                    _content = null;
-                    _hostPage = null;
-                }
+                // content.CloseAsync targets this popup; Page.ClosePopupAsync closes whatever
+                // popup is on top, which could be someone else's.
+                await content.CloseAsync();
+            }
+            catch (Exception ex)
+            {
+                // Toolkit throws PopupNotFound/PopupBlocked if the modal stack isn't what
+                // we expect; the operation already succeeded, so don't fail it (issue #2).
+                App.Report("MauiLoadingOverlay.ExitAsync", ex);
+                if (!shown.IsCompleted)
+                    _ = RetryCloseAsync(content, shown);
             }
         });
+    }
+
+    // The popup is still up but couldn't be closed (e.g. another modal page is above it).
+    // Keep trying in the background so the caller's operation isn't held up, and stop once
+    // ShowPopupAsync completes, i.e. the popup is actually gone.
+    // Polls every 250ms: the toolkit raises no event when a covering modal goes away.
+    private static async Task RetryCloseAsync(LoadingOverlayContent content, Task shown)
+    {
+        while (!shown.IsCompleted)
+        {
+            await Task.Delay(CloseRetryDelay);
+            try { await MainThread.InvokeOnMainThreadAsync(() => content.CloseAsync()); }
+            catch { /* still blocked or already closing; loop re-checks */ }
+        }
     }
 }
