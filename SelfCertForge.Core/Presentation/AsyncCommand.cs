@@ -22,7 +22,14 @@ public sealed class AsyncCommand : ICommand
 
     public async void Execute(object? parameter)
     {
-        await _execute();
+        try
+        {
+            await _execute();
+        }
+        catch (Exception ex)
+        {
+            CommandExceptionHandler.Report(ex);
+        }
     }
 
     public Task ExecuteAsync() => _execute();

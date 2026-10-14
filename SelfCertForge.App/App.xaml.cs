@@ -17,6 +17,8 @@ public partial class App : Application
             Dump("AppDomain.UnhandledException", e.ExceptionObject as Exception);
         TaskScheduler.UnobservedTaskException += (_, e) =>
             Dump("TaskScheduler.UnobservedTaskException", e.Exception);
+        SelfCertForge.Core.Presentation.CommandExceptionHandler.Handler = ex =>
+            Dump("Command", ex);
     }
 
     /// <summary>

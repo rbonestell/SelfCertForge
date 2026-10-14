@@ -49,8 +49,8 @@ internal sealed class AsyncRelayCommand : ICommand
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[AsyncRelayCommand] Unhandled exception: {ex}");
-            throw;
+            // Never rethrow from async void — it terminates the app (issue #2).
+            CommandExceptionHandler.Report(ex);
         }
         finally
         {

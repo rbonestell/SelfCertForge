@@ -31,6 +31,26 @@ public sealed class CertificatesViewModelExportTests
         overlay.Messages.Should().ContainSingle().Which.Should().Be("Exporting Certificate…");
     }
 
+    [Fact]
+    public async Task ExportDer_WhenExportThrows_ShowsErrorDialog()
+    {
+        var dialog = new RecordingDialog();
+        var store = new FakeStore(Child("c1", "r1"));
+        var vm = new CertificatesViewModel(
+            store,
+            () => DateTimeOffset.UtcNow,
+            exportService: new ThrowingExportService(new UnauthorizedAccessException("Access denied")),
+            folderPicker: new StubFolderPicker("/tmp/export"),
+            confirmationDialog: dialog);
+        await vm.LoadAsync();
+        vm.SelectById("c1");
+
+        await ((AsyncRelayCommand)vm.ExportDerCommand).ExecuteAsync(null);
+
+        dialog.Shown.Should().ContainSingle()
+            .Which.Should().Be(("Export Failed", "Access denied"));
+    }
+
     private static StoredCertificate Child(string id, string issuerId) => new(
         Id: id, Kind: StoredCertificateKind.Child, CommonName: id,
         Subject: $"CN={id}", IssuerId: issuerId, IssuerName: "Root",
@@ -45,6 +65,24 @@ public sealed class CertificatesViewModelExportTests
         public Task ExportPfxAsync(StoredCertificate cert, string outputFolder, string? password, CancellationToken ct = default) => Task.CompletedTask;
         public Task ExportDerAsync(StoredCertificate cert, string outputFolder, CancellationToken ct = default) => Task.CompletedTask;
         public Task ExportP7bAsync(StoredCertificate cert, string outputFolder, CancellationToken ct = default) => Task.CompletedTask;
+    }
+
+    private sealed class ThrowingExportService(Exception ex) : ICertificateExportService
+    {
+        public Task ExportKeyPemAsync(StoredCertificate cert, string outputFolder, CancellationToken ct = default) => throw ex;
+        public Task ExportPfxAsync(StoredCertificate cert, string outputFolder, string? password, CancellationToken ct = default) => throw ex;
+        public Task ExportDerAsync(StoredCertificate cert, string outputFolder, CancellationToken ct = default) => throw ex;
+        public Task ExportP7bAsync(StoredCertificate cert, string outputFolder, CancellationToken ct = default) => throw ex;
+    }
+
+    private sealed class RecordingDialog : IConfirmationDialog
+    {
+        public List<(string Title, string Message)> Shown { get; } = new();
+        public Task<bool> ShowAsync(string title, string message, string confirmLabel = "Confirm", string cancelLabel = "Cancel")
+        {
+            Shown.Add((title, message));
+            return Task.FromResult(true);
+        }
     }
 
     private sealed class FakeStore : ICertificateStore
