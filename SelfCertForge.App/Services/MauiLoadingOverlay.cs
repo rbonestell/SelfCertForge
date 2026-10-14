@@ -130,6 +130,12 @@ public sealed class MauiLoadingOverlay : ILoadingOverlay
                 {
                     await _hostPage.ClosePopupAsync();
                 }
+                catch (Exception ex)
+                {
+                    // Toolkit throws PopupNotFound/PopupBlocked if the modal stack isn't what
+                    // we expect; the operation already succeeded, so don't fail it (issue #2).
+                    App.Report("MauiLoadingOverlay.ExitAsync", ex);
+                }
                 finally
                 {
                     _content = null;
