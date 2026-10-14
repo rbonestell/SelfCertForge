@@ -1,7 +1,7 @@
 {
 	"permissions": {
 		"allow": [
-			"mcp__plugin_constellation_*"
+			"mcp__plugin_constellation_constellation"
 		]
 	},
 	"extraKnownMarketplaces": {
