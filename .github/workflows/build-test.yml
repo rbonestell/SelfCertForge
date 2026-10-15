@@ -23,23 +23,36 @@ jobs:
       matrix:
         include:
           - os: xcode-27
+            workload: maui-maccatalyst
           - os: windows-latest
+            workload: maui-windows
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+
+      # Install the SDK into a dedicated dir so the cache holds only our SDK +
+      # workload, not the runner's preinstalled SDKs. setup-dotnet honors this.
+      - name: Set .NET install dir
+        shell: bash
+        run: echo "DOTNET_INSTALL_DIR=${{ runner.temp }}/dotnet" >> "$GITHUB_ENV"
+
+      # Workloads install into the SDK dir, so caching it skips the workload
+      # install on hit. Bumping either version in the key forces a fresh install.
+      - name: Cache .NET SDK + MAUI workload
+        id: dotnet-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.DOTNET_INSTALL_DIR }}
+          key: dotnet-${{ runner.os }}-${{ runner.arch }}-${{ env.DOTNET_VERSION }}-${{ matrix.workload }}-${{ env.MAUI_WORKLOAD_VERSION }}
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Install MAUI workload (macOS)
-        if: runner.os == 'macOS'
-        run: dotnet workload install maui --version ${{ env.MAUI_WORKLOAD_VERSION }}
-
-      - name: Install MAUI workload (Windows)
-        if: runner.os == 'Windows'
-        run: dotnet workload install maui-windows --version ${{ env.MAUI_WORKLOAD_VERSION }}
+      - name: Install MAUI workload
+        if: steps.dotnet-cache.outputs.cache-hit != 'true'
+        run: dotnet workload install ${{ matrix.workload }} --version ${{ env.MAUI_WORKLOAD_VERSION }}
 
       # Mac Catalyst SDK 27.0 (workload 10.0.402) requires Xcode 27.0. Only the preview xcode-27 runner has it; move back to macos-latest once GA images ship Xcode 27.
       - name: Select Xcode
