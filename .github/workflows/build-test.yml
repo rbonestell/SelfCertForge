@@ -12,8 +12,8 @@ env:
   # Pin to the exact SDK from global.json so setup-dotnet doesn't pick up
   # a different patch — keeps build behavior identical to the local makefile
   # and the existing Release workflow.
-  DOTNET_VERSION: "10.0.203"
-  MAUI_WORKLOAD_VERSION: "10.0.107"
+  DOTNET_VERSION: "10.0.402"
+  MAUI_WORKLOAD_VERSION: "10.0.402"
 
 jobs:
   build-app:
@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-latest
+          - os: xcode-27
           - os: windows-latest
     runs-on: ${{ matrix.os }}
     steps:
@@ -41,12 +41,12 @@ jobs:
         if: runner.os == 'Windows'
         run: dotnet workload install maui-windows --version ${{ env.MAUI_WORKLOAD_VERSION }}
 
-      # .NET 10 MAUI bindings reference MacCatalyst 26 APIs; Xcode 26+ is required.
+      # Mac Catalyst SDK 27.0 (workload 10.0.402) requires Xcode 27.0. Only the preview xcode-27 runner has it; move back to macos-latest once GA images ship Xcode 27.
       - name: Select Xcode
         if: runner.os == 'macOS'
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: 'latest-stable'
+          xcode-version: '27.0'
 
       - name: Build (make build)
         # The makefile picks the right TFM based on the runner OS:

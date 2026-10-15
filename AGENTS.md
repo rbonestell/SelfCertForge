@@ -1,7 +1,7 @@
 # SelfCertForge
 
 ## What this is
-.NET 10 MAUI desktop app (macCatalyst + Windows) that generates and manages root certificates + signed cert bundles using .NET's built-in `System.Security.Cryptography` APIs — no external OpenSSL binary required. SDK pinned via `global.json` (.NET 10.0.203, MAUI workload 10.0.107).
+.NET 10 MAUI desktop app (macCatalyst + Windows) that generates and manages root certificates + signed cert bundles using .NET's built-in `System.Security.Cryptography` APIs — no external OpenSSL binary required. SDK pinned via `global.json` (.NET 10.0.402); MAUI workload set 10.0.402 pinned in the workflows (Mac Catalyst SDK 27.0 → Xcode 27.0, min macOS 14).
 
 ## Solution layout
 - `SelfCertForge.App` — MAUI UI. Shell-based nav (`Shell/ShellPage`, `ShellViewModel`, `AppRoute`), pages in `Pages/` (Dashboard, Authorities, Certificates, Settings, AboutSection), modal dialogs in `Dialogs/` (CreateRoot, CreateSignedCert) with `*Host` adapters that implement Core dialog abstractions, reusable XAML controls + behaviors + converters in `Controls/`, MAUI-side service shims in `Services/` (folder picker, PFX password, confirmation), `Navigation/NavigationService`, MAUI bootstrap in `MauiProgram.cs`. Bundle/exe name overridden to `SelfCertForge` via `<AssemblyName>` (root namespace stays `SelfCertForge.App`). Mac Catalyst tweaks under `Platforms/MacCatalyst` (handler customizations, `AppDelegate`, `MacDataFolderService`); Windows-specific resources under `Platforms/Windows` (multi-size `app.ico` for desktop shortcuts).
@@ -30,7 +30,7 @@ make clean     # dotnet clean + remove App bin/obj
 Direct invocation also works: `dotnet test SelfCertForge.Core.Tests/SelfCertForge.Core.Tests.csproj`. If Xcode gating blocks build: `-p:ValidateXcodeVersion=false` (already set in the App csproj). macCatalyst builds produce a fat bundle (`maccatalyst-x64;maccatalyst-arm64`); Windows ships **x64 only** (`win-x64`) — no ARM64 build — and uses unpackaged `WindowsAppSDKSelfContained` so Velopack installers run on machines without WinAppRuntime.
 
 ## Release pipeline
-- `.github/workflows/release.yml` runs on `release: published`. Matrix: `macos-latest` (universal macCatalyst .pkg) and `windows-latest` (`win-x64` only). Don't add a `win-arm64` row back without an explicit ask — the Windows installer is x64-only by design.
+- `.github/workflows/release.yml` runs on `release: published`. Matrix: `xcode-27` (preview runner with Xcode 27.0; universal macCatalyst .pkg) and `windows-latest` (`win-x64` only). Don't add a `win-arm64` row back without an explicit ask — the Windows installer is x64-only by design.
 - Velopack (`vpk`) packages each channel (`osx`, `win-x64`), pulls the previous release for delta generation, and the `upload` job pushes each channel's artifacts to the GitHub Release with `--merge`. Channel names must stay in sync between the matrix and the upload loop.
 - macOS signing uses an Apple Developer ID cert imported into a temp keychain + a notarytool profile created from App Store Connect API key secrets. Windows signing uses Azure Trusted Signing via OIDC federated auth (`environment: release` — the federated credential subject claim is environment-scoped). Sign published binaries first, then re-sign Velopack's `Setup.exe` after `vpk pack` (Velopack rewrites the stub installer, invalidating prior signatures).
 - The workflow stamps `<ApplicationDisplayVersion>` from the release tag (`v1.2.3` → `1.2.3`). Don't hard-code release versions in the csproj.
