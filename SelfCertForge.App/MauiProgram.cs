@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using CommunityToolkit.Maui;
-using SkiaSharp.Views.Maui.Controls.Hosting;
 #if WINDOWS
 using Microsoft.Maui.LifecycleEvents;
 #endif
@@ -41,7 +40,6 @@ public static class MauiProgram
         builder
             .UseMauiApp<App>()
             .UseMauiCommunityToolkit()
-            .UseSkiaSharp()
             .ConfigureFonts(fonts =>
             {
                 fonts.AddFont("Inter-Regular.ttf", "InterRegular");
