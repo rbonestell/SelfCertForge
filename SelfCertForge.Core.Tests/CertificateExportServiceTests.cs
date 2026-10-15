@@ -89,6 +89,18 @@ public sealed class CertificateExportServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task ExportKeyPemAsync_WildcardCommonName_WritesVisibleFileName()
+    {
+        var certPath = WriteTestCertOnly("wildcard");
+        var cert = MakeCert("1", "*.example.local", certPath: certPath);
+        var outDir = Path.Combine(_dir, "out");
+        var sut = MakeSut();
+        await sut.ExportKeyPemAsync(cert, outDir);
+        Directory.GetFiles(outDir).Select(Path.GetFileName)
+            .Should().BeEquivalentTo(["example.local.pem"]);
+    }
+
+    [Fact]
     public async Task ExportKeyPemAsync_WithKey_WritesPemAndKey()
     {
         var (certPath, keyPath) = WriteTestCertAndKey("with-key");

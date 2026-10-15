@@ -11,6 +11,9 @@ namespace SelfCertForge.Core.Validation;
 /// - DNS: only ASCII letters (a-z, A-Z), digits (0-9), and hyphen (-),
 ///   organized as one or more dot-separated labels. No leading/trailing
 ///   hyphens within a label. No empty labels. Length 1..253.
+///   A wildcard "*" is allowed only as the entire left-most label, followed
+///   by at least two labels (*.example.local, not *.local), since browsers
+///   won't match a wildcard on a single-label domain.
 /// - IP: must parse as a valid IPv4 or IPv6 address.
 ///
 /// The intent is to block obvious garbage at "Add" time without trying to
@@ -28,6 +31,14 @@ public static class SanRules
         // Split on '.', each label must be non-empty, 1..63 chars, no leading/trailing hyphen,
         // and contain only [A-Za-z0-9-].
         var labels = v.Split('.');
+        if (v.Contains('*'))
+        {
+            if (labels[0] != "*" || v.IndexOf('*', 1) >= 0)
+                return SanValidationResult.Fail("Wildcard \"*\" is only allowed as the entire left-most label (e.g. *.example.local).");
+            if (labels.Length < 3)
+                return SanValidationResult.Fail("Wildcard names need at least two labels after \"*\" (e.g. *.example.local).");
+            labels = labels[1..];
+        }
         foreach (var label in labels)
         {
             if (label.Length == 0)
