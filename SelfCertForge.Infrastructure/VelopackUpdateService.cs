@@ -16,8 +16,12 @@ public sealed class VelopackUpdateService : IUpdateService
     {
         try
         {
+            // On Mac Catalyst HttpClientHandler is backed by NSUrlSessionHandler, which throws when
+            // MaxAutomaticRedirections is lowered. Velopack's default downloader sets it to 10, so
+            // every update request would fail before it is sent.
+            var downloader = OperatingSystem.IsMacCatalyst() ? new CatalystFileDownloader() : null;
             _manager = new Velopack.UpdateManager(
-                new Velopack.Sources.GithubSource(RepoUrl, null, false),
+                new Velopack.Sources.GithubSource(RepoUrl, null, false, downloader),
                 new Velopack.UpdateOptions { ExplicitChannel = GetPlatformChannel() });
         }
         catch
@@ -72,5 +76,11 @@ public sealed class VelopackUpdateService : IUpdateService
 
         _manager.ApplyUpdatesAndRestart(_pendingUpdate);
         return Task.CompletedTask;
+    }
+
+    // Same as Velopack's default handler minus MaxAutomaticRedirections (unsupported by NSUrlSessionHandler).
+    private sealed class CatalystFileDownloader : Velopack.Sources.HttpClientFileDownloader
+    {
+        protected override HttpClientHandler CreateHttpClientHandler() => new() { AllowAutoRedirect = true };
     }
 }
