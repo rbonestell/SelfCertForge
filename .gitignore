@@ -1,6 +1,7 @@
 ## AI Tools
 .claude/settings.local.json
 .superpowers/
+docs/superpowers/
 
 ## Worktrees
 .worktrees/

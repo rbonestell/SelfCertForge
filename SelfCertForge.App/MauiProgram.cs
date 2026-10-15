@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using CommunityToolkit.Maui;
-using SkiaSharp.Views.Maui.Controls.Hosting;
 #if WINDOWS
 using Microsoft.Maui.LifecycleEvents;
 #endif
@@ -19,8 +18,16 @@ public static class MauiProgram
 {
     public static MauiApp CreateMauiApp()
     {
+#if MACCATALYST
+        // Velopack (through 1.2.161) only detects macOS via IsOSPlatform(OSX), which is false on
+        // Mac Catalyst, so it treats the app as an unsupported OS and in-app updates never
+        // activate. Catalyst produces a standard .app bundle, so force the osx code path.
+        // ponytail: remove once a Velopack release includes velopack/velopack#1020 (first release after 1.2.161) and we bump to it.
+        typeof(VelopackRuntimeInfo).GetProperty(nameof(VelopackRuntimeInfo.SystemOs))!
+            .SetValue(null, RuntimeOs.OSX);
+#endif
         // Velopack must run before any other app code to handle install/update hooks.
-        // Wrapped in try/catch to gracefully handle unsupported platforms (e.g. macCatalyst dev builds).
+        // Wrapped in try/catch to gracefully handle non-Velopack installs (e.g. dev builds).
         try { VelopackApp.Build().Run(); } catch { /* not a Velopack-managed install */ }
 
 #if MACCATALYST
@@ -33,7 +40,6 @@ public static class MauiProgram
         builder
             .UseMauiApp<App>()
             .UseMauiCommunityToolkit()
-            .UseSkiaSharp()
             .ConfigureFonts(fonts =>
             {
                 fonts.AddFont("Inter-Regular.ttf", "InterRegular");

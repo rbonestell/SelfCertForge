@@ -8,7 +8,7 @@ namespace SelfCertForge.App.Services;
 public sealed class MauiLoadingOverlay : ILoadingOverlay
 {
     private static readonly TimeSpan ShowDelay = TimeSpan.FromMilliseconds(150);
-    private static readonly TimeSpan MinVisible = TimeSpan.FromMilliseconds(500);
+    private static readonly TimeSpan MinVisible = TimeSpan.FromMilliseconds(3000);
     private static readonly TimeSpan OpenTimeout = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan CloseRetryDelay = TimeSpan.FromMilliseconds(250);
 
